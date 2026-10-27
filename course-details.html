@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Details — SkillOS</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/courses.css?v=4">
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo" style="display:flex; align-items:center; gap:10px;">
+      <img src="images/logo.png" alt="SkillOS Logo" style="height:36px; border-radius: var(--r-sm);">
+      <span class="logo-text">Skill<em>OS</em></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Workspace</div>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="courses.html" class="nav-item active">
+        <span class="nav-icon">📚</span> Courses
+      </a>
+      <a href="ai-coach.html" class="nav-item">
+        <span class="nav-icon">🤖</span> AI Coach
+      </a>
+      <a href="assessments.html" class="nav-item">
+        <span class="nav-icon">📝</span> Assessments
+      </a>
+      <a href="progress.html" class="nav-item">
+        <span class="nav-icon">📈</span> Progress
+      </a>
+      <a href="certificates.html" class="nav-item">
+        <span class="nav-icon">🏆</span> Certificates
+      </a>
+
+      <div class="nav-section-label" style="margin-top:16px;">Account Settings</div>
+      <a href="profile.html" class="nav-item">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="sidebar-user-info" onclick="window.location.href='profile.html'">
+        <div class="user-avatar" id="sidebar-avatar">
+          <span data-user-avatar>S</span>
+        </div>
+        <div style="min-width:0; flex:1;">
+          <div class="user-name truncate" data-user-name>Student</div>
+          <div class="user-role">Premium Member</div>
+        </div>
+      </div>
+      <button class="sidebar-logout-btn" data-logout-btn title="Sign Out" aria-label="Sign Out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <div id="sidebar-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:150; backdrop-filter:blur(2px);"></div>
+
+  <!-- MAIN WINDOW -->
+  <main class="main-content">
+    <!-- HERO COMPONENT -->
+    <div class="course-detail-hero">
+      <div class="container">
+        <div class="cdh-grid">
+          <div>
+            <div class="cdh-crumb">
+              <a href="courses.html">📚 Catalog</a>
+              <span class="breadcrumb-sep">/</span>
+              <span id="breadcrumb-title">Details</span>
+            </div>
+            
+            <span class="cdh-cat" id="course-category">Subject</span>
+            <h1 class="cdh-title" id="course-title">Loading Course...</h1>
+            <p class="cdh-desc" id="course-desc">Please wait while course details are loaded.</p>
+            
+            <div class="cdh-meta">
+              <div class="cdh-meta-item">👨‍🏫 <span id="course-instructor">Instructor</span></div>
+              <div class="cdh-meta-item">⏱️ <span id="course-duration">Duration</span></div>
+              <div class="cdh-meta-item">📖 <span id="course-lessons-count">0 lessons</span></div>
+              <div class="cdh-meta-item">📊 <span id="course-level">Beginner</span></div>
+              <div class="cdh-meta-item">⭐ <span id="course-rating">4.8</span></div>
+            </div>
+          </div>
+
+          <div>
+            <!-- Sticky card -->
+            <div class="enroll-card">
+              <div class="enroll-preview">
+                <span id="course-emoji">📖</span>
+              </div>
+              <div class="enroll-body">
+                <div class="enroll-price">Free Enrollment</div>
+                
+                <div id="enroll-progress-wrap" style="display:none; margin-bottom:16px;">
+                  <div class="flex justify-between text-xs font-semibold" style="margin-bottom:6px;">
+                    <span id="completed-lessons-count">0 lessons</span>
+                    <span id="progress-pct" style="color:var(--primary);">0%</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-fill" id="progress-fill-bar" style="width:0%"></div></div>
+                </div>
+
+                <button class="btn btn-primary btn-full enroll-btn" id="enroll-btn">Enroll Now</button>
+                
+                <div class="enroll-features" style="margin-top:16px;">
+                  <div class="enroll-feature"><span class="ef-icon">✓</span> Dual-credential certificate (Course + Exam)</div>
+                  <div class="enroll-feature"><span class="ef-icon">✓</span> 24/7 AI tutor guidance</div>
+                  <div class="enroll-feature"><span class="ef-icon">✓</span> Active study points</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Curriculum body -->
+    <div class="page-body" style="max-width: 800px;">
+      <h2 style="font-size:1.5rem; font-weight:800; margin-bottom:16px;">📋 Course Curriculum</h2>
+      <p class="text-sm text-muted" style="margin-bottom: 24px;">First 2 lessons are free preview items. Click lessons to open the player.</p>
+      
+      <div class="lesson-list" id="lesson-list">
+        <div class="skeleton" style="height: 60px; border-radius: var(--r-md);"></div>
+        <div class="skeleton" style="height: 60px; border-radius: var(--r-md); margin-top:12px;"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Video player modal -->
+<div class="modal-overlay hidden" id="lesson-modal">
+  <div class="modal-box modal-video-theater">
+    <button class="modal-close" onclick="closeLessonModal()">&times;</button>
+    
+    <div class="video-meta-bar">
+      <div class="video-meta-left">
+        <span class="badge badge-green" id="modal-lesson-badge">Lesson Video</span>
+        <span class="badge" style="background:rgba(255,255,255,0.1); color:#38bdf8;" id="modal-lesson-course">Course</span>
+      </div>
+      <div class="video-meta-right">
+        <span>⏱️ <span id="modal-lesson-duration">20m</span></span>
+        <span>👨‍🏫 <span id="modal-lesson-instructor">Instructor</span></span>
+      </div>
+    </div>
+
+    <div class="video-title-row">
+      <h3 id="modal-lesson-title">Lesson Title</h3>
+      <p id="modal-lesson-subtitle">Watch the complete interactive video lecture and mark complete to earn XP.</p>
+    </div>
+    
+    <!-- Real Video Player Box -->
+    <div class="video-player-container" id="video-player-wrapper">
+      <iframe 
+        id="modal-video-frame" 
+        src="" 
+        title="SkillOS Lesson Video Player" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <div class="video-actions-bar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="btn btn-primary" id="modal-complete-btn">
+          ✓ Mark as Complete (+25 XP)
+        </button>
+        <button class="btn btn-outline" id="modal-next-btn" style="color:#e2e8f0; border-color:rgba(255,255,255,0.2);">
+          Next Lesson ❯
+        </button>
+      </div>
+      <button class="btn btn-ghost" onclick="closeLessonModal()" style="color:#94a3b8;">
+        Close Player
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating AI Tutor Button -->
+<button id="floating-ai-tutor-btn" class="floating-ai-tutor-btn" title="Open 24/7 Course AI Tutor">
+  <span style="font-size:18px;">🤖</span>
+  <span>Course AI Tutor</span>
+</button>
+
+<!-- Course AI Tutor Slide-over Drawer -->
+<div id="course-ai-drawer" class="ai-drawer-overlay hidden">
+  <div class="ai-drawer">
+    <div class="ai-drawer-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">🤖</span>
+        <div>
+          <h3 style="font-size:1rem; font-weight:700; margin:0;" id="ai-drawer-title">Course AI Tutor</h3>
+          <p style="font-size:0.75rem; color:var(--text-400); margin:0;">Gemini 3.5 Assistant · Active Visual Diagrams</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="btn btn-ghost btn-sm" id="clear-ai-chat-btn" title="Clear Chat History" style="padding:4px 8px; font-size:13px; color:var(--text-400);">🗑️ Clear</button>
+        <button class="btn btn-ghost btn-sm" id="close-ai-drawer-btn" style="padding:4px 8px; font-size:20px; color:var(--text-400);">&times;</button>
+      </div>
+    </div>
+
+    <!-- Chatbot Learning Mode Options -->
+    <div class="ai-mode-bar" id="ai-mode-bar">
+      <button class="ai-mode-btn active" data-mode="mentor" title="In-depth conceptual tutoring">
+        🎓 Mentor
+      </button>
+      <button class="ai-mode-btn" data-mode="visual" title="Focuses on interactive visual diagrams">
+        🎨 Visual & Diagrams
+      </button>
+      <button class="ai-mode-btn" data-mode="eli5" title="Explain Like I'm 5 (Super simple everyday analogies)">
+        💡 ELI5 Simple
+      </button>
+      <button class="ai-mode-btn" data-mode="code" title="Practical code implementations and syntax">
+        💻 Code Lab
+      </button>
+      <button class="ai-mode-btn" data-mode="quiz" title="Test yourself with interactive quiz questions">
+        📝 Quiz Mode
+      </button>
+    </div>
+
+    <!-- Chat history body -->
+    <div class="ai-drawer-body" id="ai-drawer-messages">
+      <div class="message ai anim-fade-in-up">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-content">
+          <div class="msg-bubble" id="ai-welcome-msg">
+            Hello! I am your <strong>Course AI Tutor</strong>. I am trained on this course curriculum. Click any quick topic below or type your question!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggested prompt chips & Input box -->
+    <div class="ai-drawer-footer">
+      <div class="ai-chips-wrap" id="ai-suggested-chips">
+        <!-- Dynamically populated chips based on current course -->
+      </div>
+
+      <div class="chat-input-box" style="padding:6px 12px; margin-top:6px;">
+        <textarea id="ai-drawer-input" rows="1" placeholder="Ask AI tutor or type 'need image of...'"></textarea>
+        <button id="ai-drawer-visual-btn" class="msg-action-btn" title="Generate AI Concept Diagram" style="border:none; background:none; font-size:16px; cursor:pointer;" aria-label="Generate Visual Diagram">🎨</button>
+        <button id="ai-drawer-voice-btn" class="msg-action-btn" title="Voice Input" style="border:none; background:none; font-size:16px; cursor:pointer;">🎙️</button>
+        <button id="ai-drawer-send-btn" class="chat-send-btn" style="width:34px; height:34px; font-size:14px;">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/course-details.js?v=6"></script>
+</body>
+</html>

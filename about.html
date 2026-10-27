@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us — SkillOS</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .about-hero {
+      background: var(--grad-hero);
+      padding: 100px 0 60px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-ring"></div></div>
+
+<!-- NAVIGATION -->
+<nav class="landing-nav scrolled" style="position: sticky;">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="sidebar-logo" style="border:none; height:auto; padding:0;">
+        <div class="logo-mark">S</div>
+        <span class="logo-text">Skill<em>OS</em></span>
+      </a>
+
+      <div class="landing-nav-links">
+        <a href="index.html#features" class="landing-nav-link">Features</a>
+        <a href="index.html#how" class="landing-nav-link">How It Works</a>
+        <a href="about.html" class="landing-nav-link active">About</a>
+        <a href="contact.html" class="landing-nav-link">Contact</a>
+      </div>
+
+      <div class="landing-nav-actions">
+        <a href="login.html" class="btn btn-ghost btn-sm">Sign In</a>
+        <a href="login.html?tab=register" class="btn btn-primary btn-sm">Get Started</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header class="about-hero">
+  <div class="container">
+    <span class="eyebrow">Our Mission</span>
+    <h1 class="section-title">Bridging AI & Student Success</h1>
+    <p class="section-desc">SkillOS is an experimental student environment matching standard course curriculum tracks with context-aware LLM coaches.</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container-sm">
+    <h2 class="font-bold text-2xl" style="margin-bottom:16px;">The Idea</h2>
+    <p class="text-muted" style="margin-bottom:24px;">
+      Most online education catalogs fail due to lack of personalization and immediate help. By integrating a 24/7 AI tutor powered by Gemini directly inside the curriculum view, students get their bugs fixed, logic puzzles explained, and diagnostic tests generated in real-time.
+    </p>
+
+    <h2 class="font-bold text-2xl" style="margin-bottom:16px;">Our Stack</h2>
+    <p class="text-muted" style="margin-bottom:24px;">
+      SkillOS runs on clean modern HTML5 components, CSS design tokens, modular ES Javascript, PostgreSQL Database, Express REST APIs, and Google Gemini AI API endpoints.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>© 2026 SkillOS. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+  import { hideLoader } from './js/app.js';
+  window.addEventListener('load', hideLoader);
+</script>
+</body>
+</html>

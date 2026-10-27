@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — SkillOS</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-text">Skill<em>OS</em></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Workspace</div>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="courses.html" class="nav-item">
+        <span class="nav-icon">📚</span> Courses
+      </a>
+      <a href="ai-coach.html" class="nav-item">
+        <span class="nav-icon">🤖</span> AI Coach
+      </a>
+      <a href="assessments.html" class="nav-item">
+        <span class="nav-icon">📝</span> Assessments
+      </a>
+      <a href="progress.html" class="nav-item">
+        <span class="nav-icon">📈</span> Progress
+      </a>
+      <a href="certificates.html" class="nav-item">
+        <span class="nav-icon">🏆</span> Certificates
+      </a>
+
+      <div class="nav-section-label" style="margin-top:16px;">Account Settings</div>
+      <a href="profile.html" class="nav-item">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+      <a href="settings.html" class="nav-item active">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="sidebar-user-info" onclick="window.location.href='profile.html'">
+        <div class="user-avatar" id="sidebar-avatar">
+          <span data-user-avatar>S</span>
+        </div>
+        <div style="min-width:0; flex:1;">
+          <div class="user-name truncate" data-user-name>Student</div>
+          <div class="user-role">Premium Member</div>
+        </div>
+      </div>
+      <button class="sidebar-logout-btn" data-logout-btn title="Sign Out" aria-label="Sign Out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <div id="sidebar-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:150; backdrop-filter:blur(2px);"></div>
+
+  <!-- MAIN WINDOW -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">Settings</h1>
+          <p class="page-subtitle">Configure notification triggers and preferences.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="hamburger" id="hamburger-btn">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <div class="settings-layout">
+        <div class="settings-main">
+          
+          <!-- Preference options -->
+          <div class="settings-card anim-fade-in-up d-100">
+            <div class="sc-header"><h3 class="sc-title">⚙️ Preference Toggles</h3></div>
+            <div class="sc-body">
+              
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-name">Notification Sounds 🔔</div>
+                  <div class="setting-desc">Play audio chimes on alerts, completions & achievements.</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <button type="button" id="test-sound-btn" class="btn btn-outline btn-xs" style="font-size: 11px; padding: 4px 10px; border-radius: 6px;">🔊 Test Sound</button>
+                  <label class="toggle">
+                    <input type="checkbox" id="setting-sound" checked>
+                    <span class="toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-name">Do Not Disturb</div>
+                  <div class="setting-desc">Mute all system popups during learning sessions.</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="setting-dnd">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-name">Email Reminders</div>
+                  <div class="setting-desc">Receive notifications about pending assignments.</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="setting-emails" checked>
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+
+              <div class="form-group" style="margin-top:16px;">
+                <label class="form-label" for="profile-path">Target Learning Path</label>
+                <select id="profile-path" class="form-select">
+                  <option value="">Select Path</option>
+                  <option value="web-development">Full-Stack Web Development</option>
+                  <option value="data-science">Data Science & ML</option>
+                  <option value="digital-marketing">Digital Marketing</option>
+                </select>
+              </div>
+
+              <button class="btn btn-primary" id="save-settings-btn" style="width:fit-content; margin-top:12px;">Save Preferences</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-side">
+          <!-- Danger zone -->
+          <div class="danger-zone anim-fade-in-up d-200">
+            <h4 class="dz-title">Danger Zone</h4>
+            <p class="dz-desc">Permanently remove your credentials and delete study records from the database.</p>
+            <button class="btn btn-danger btn-sm btn-full" onclick="showAlertDialog({ title: 'Account Deletion Notice', message: 'Please contact the system administrator to request account and database deletion.', icon: '⚠️', buttonText: 'Understood' })">Delete Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile Bottom Navigation bar -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-items">
+    <a href="dashboard.html" class="mobile-nav-item">
+      <span class="mni">🏠</span>Dashboard
+    </a>
+    <a href="courses.html" class="mobile-nav-item">
+      <span class="mni">📚</span>Courses
+    </a>
+    <a href="ai-coach.html" class="mobile-nav-item">
+      <span class="mni">🤖</span>Coach
+    </a>
+    <a href="progress.html" class="mobile-nav-item">
+      <span class="mni">📈</span>Progress
+    </a>
+    <a href="profile.html" class="mobile-nav-item">
+      <span class="mni">👤</span>Profile
+    </a>
+  </div>
+</nav>
+
+<script type="module" src="js/settings.js"></script>
+</body>
+</html>

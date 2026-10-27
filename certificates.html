@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificates — SkillOS</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/courses.css">
+  <style>
+    /* Search box */
+    .cert-search-box {
+      margin-bottom: 22px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 6px 8px 6px 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+    .cert-search-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    }
+
+    /* Certificate preview frame */
+    .cert-frame {
+      border: 8px double #d97706;
+      background: linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fef3c7 100%);
+      padding: 44px 36px;
+      text-align: center;
+      border-radius: 12px;
+      position: relative;
+      margin-bottom: 24px;
+      box-shadow: inset 0 0 20px rgba(217, 119, 6, 0.1), 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .cert-frame-logo {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #92400e;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .cert-frame-title {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+    .cert-frame-name {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #b45309;
+      margin: 14px 0 6px;
+      border-bottom: 2px solid #f59e0b;
+      display: inline-block;
+      padding-bottom: 4px;
+    }
+    .cert-seal {
+      width: 56px;
+      height: 56px;
+      background: #fef3c7;
+      border: 2px dashed #d97706;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 14px auto 8px;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #preview-modal,
+      #preview-modal .modal-box,
+      #preview-modal .cert-frame,
+      #preview-modal .cert-frame * {
+        visibility: visible;
+      }
+      #preview-modal {
+        position: fixed !important;
+        inset: 0 !important;
+        background: #ffffff !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 99999 !important;
+      }
+      #preview-modal .modal-box {
+        max-width: 95% !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+      }
+      #preview-modal .modal-close,
+      #preview-modal .flex,
+      #preview-modal h3,
+      #preview-modal .cert-modal-hide-print,
+      #preview-modal .cert-modal-actions {
+        display: none !important;
+      }
+      .cert-frame {
+        border: 12px double #b45309 !important;
+        background: #ffffff !important;
+        margin: 0 auto !important;
+        padding: 50px 40px !important;
+      }
+    }
+    /* Credential Pathways and Dual-Requirement Tracks */
+    .dual-path-banner {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: var(--r-xl);
+      padding: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .dual-path-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .dual-step-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .dual-step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary-100);
+      color: var(--primary);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .track-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+      margin-top: 16px;
+    }
+    .track-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--t-base);
+    }
+    .track-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-300);
+      transform: translateY(-2px);
+    }
+    .track-card.ready-for-exam {
+      border: 1.5px solid #d97706;
+      background: linear-gradient(180deg, #fffbeb08 0%, var(--surface) 100%);
+    }
+    .track-card.certified {
+      border: 1.5px solid #16a34a;
+      background: linear-gradient(180deg, #f0fdf408 0%, var(--surface) 100%);
+    }
+    .track-step-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      margin-bottom: 10px;
+    }
+    .step-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .step-badge.done {
+      background: rgba(22, 163, 74, 0.15);
+      color: #16a34a;
+    }
+    .step-badge.pending {
+      background: rgba(217, 119, 6, 0.15);
+      color: #d97706;
+    }
+    .step-badge.wait {
+      background: rgba(100, 116, 139, 0.15);
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-text">Skill<em>OS</em></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Workspace</div>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="courses.html" class="nav-item">
+        <span class="nav-icon">📚</span> Courses
+      </a>
+      <a href="ai-coach.html" class="nav-item">
+        <span class="nav-icon">🤖</span> AI Coach
+      </a>
+      <a href="assessments.html" class="nav-item">
+        <span class="nav-icon">📝</span> Assessments
+      </a>
+      <a href="progress.html" class="nav-item">
+        <span class="nav-icon">📈</span> Progress
+      </a>
+      <a href="certificates.html" class="nav-item active">
+        <span class="nav-icon">🏆</span> Certificates
+      </a>
+
+      <div class="nav-section-label" style="margin-top:16px;">Account Settings</div>
+      <a href="profile.html" class="nav-item">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="sidebar-user-info" onclick="window.location.href='profile.html'">
+        <div class="user-avatar" id="sidebar-avatar">
+          <span data-user-avatar>S</span>
+        </div>
+        <div style="min-width:0; flex:1;">
+          <div class="user-name truncate" data-user-name>Student</div>
+          <div class="user-role">Premium Member</div>
+        </div>
+      </div>
+      <button class="sidebar-logout-btn" data-logout-btn title="Sign Out" aria-label="Sign Out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <div id="sidebar-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:150; backdrop-filter:blur(2px);"></div>
+
+  <!-- MAIN WINDOW -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">Certifications & Credentials</h1>
+          <p class="page-subtitle">Dual-Prerequisite Mastery: Complete courses and pass assessments to earn verified credentials.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="hamburger" id="hamburger-btn">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- 2-Step Certification Explanation Pathway Banner -->
+      <div class="dual-path-banner anim-fade-in-up">
+        <div class="flex items-center justify-between" style="flex-wrap: wrap; gap: 8px;">
+          <div class="flex items-center gap-2">
+            <span style="font-size: 24px;">🎓</span>
+            <strong style="font-size: 1.05rem; color: var(--text-900);">How Certification Works at SkillOS</strong>
+          </div>
+          <span class="badge" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); font-size: 11px; font-weight: 700;">
+            Dual Prerequisite System
+          </span>
+        </div>
+        <p class="text-sm text-muted" style="margin: 0; max-width: 820px; line-height: 1.5;">
+          Certificates are not handed out for video completion alone. To guarantee genuine skill mastery, candidates must satisfy <strong>both</strong> requirements:
+        </p>
+        <div class="dual-path-steps">
+          <div class="dual-step-item">
+            <div class="dual-step-num">1</div>
+            <div>
+              <div class="font-bold text-sm" style="color: var(--text-900);">Course Curriculum</div>
+              <div class="text-xs text-muted" style="margin-top: 4px;">Complete 100% of all lessons, labs, and exercises.</div>
+            </div>
+          </div>
+          <div class="dual-step-item">
+            <div class="dual-step-num">2</div>
+            <div>
+              <div class="font-bold text-sm" style="color: var(--text-900);">Diagnostic Assessment</div>
+              <div class="text-xs text-muted" style="margin-top: 4px;">Pass the paired timed exam with a score of 70% or higher.</div>
+            </div>
+          </div>
+          <div class="dual-step-item" style="border-color: rgba(22, 163, 74, 0.4); background: rgba(22, 163, 74, 0.04);">
+            <div class="dual-step-num" style="background: #16a34a; color: #fff;">🏆</div>
+            <div>
+              <div class="font-bold text-sm" style="color: #16a34a;">Verified Certificate</div>
+              <div class="text-xs text-muted" style="margin-top: 4px;">Earn official credential with unique ID, grade, & PDF export.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 1: EARNED CERTIFICATES -->
+      <div id="earned-certificates-section" style="margin-bottom: 40px;">
+        <div class="flex items-center justify-between" style="margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-900); margin: 0;">🏆 Earned Certificates of Mastery</h2>
+            <p class="text-xs text-muted" style="margin-top: 2px;">Your verified, tamper-proof academic credentials.</p>
+          </div>
+          <span class="badge" id="earned-cert-count" style="background: var(--surface); border: 1px solid var(--border); font-weight: 700;">
+            0 Earned
+          </span>
+        </div>
+
+        <!-- Certificate & Primary Key Search Bar -->
+        <div class="cert-search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="cert-search-input" placeholder="Search by course name or Certificate Primary Key (e.g. SK0-AI-91455)..." style="flex: 1; border: none; background: transparent; outline: none; font-size: 0.92rem; color: var(--text-900); font-family: var(--font-sans); min-width: 180px;" autocomplete="off">
+          <button type="button" id="cert-search-clear-btn" class="hidden" style="background: none; border: none; color: var(--text-400); cursor: pointer; font-size: 15px; padding: 4px 8px; border-radius: 4px;" title="Clear search">✕</button>
+          <button class="btn btn-primary btn-sm" id="cert-search-btn" style="padding: 8px 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-lg); white-space: nowrap;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Search</span>
+          </button>
+        </div>
+
+        <div class="cert-grid" id="certificates-grid">
+          <div class="skeleton" style="height: 240px; border-radius: var(--r-xl);"></div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: CREDENTIAL TRACKS & PROGRESS -->
+      <div id="credential-tracks-section">
+        <div class="flex items-center justify-between" style="margin-bottom: 16px;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-900); margin: 0;">🎯 Credential Progress Tracks</h2>
+            <p class="text-xs text-muted" style="margin-top: 2px;">Track your two-step prerequisites for enrolled courses.</p>
+          </div>
+          <a href="courses.html" class="btn btn-outline btn-xs">+ Browse More Courses</a>
+        </div>
+        <div class="track-grid" id="credential-tracks-grid">
+          <div class="skeleton" style="height: 180px; border-radius: var(--r-xl);"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal-overlay hidden" id="preview-modal">
+  <div class="modal-box" style="max-width: 680px; padding: 28px;">
+    <button class="modal-close" onclick="closePreviewModal()">&times;</button>
+    <div class="flex items-center justify-between" style="margin-bottom: 16px;">
+      <h3 style="font-size: 1.15rem; font-weight: 800; margin: 0;">Verified Certificate</h3>
+      <span class="badge" style="background: rgba(22, 163, 74, 0.1); color: #16a34a; font-weight: 700; font-size: 11px;">Official Credential</span>
+    </div>
+    
+    <div class="cert-frame" id="printable-certificate">
+      <div class="cert-frame-logo">🎓 SkillOS</div>
+      <div class="cert-frame-title">Certificate of Completion</div>
+      <div style="font-size: 12px; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">This credential is proudly awarded to:</div>
+      <div class="cert-frame-name" id="modal-cert-name">Student Name</div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 8px;">for successfully completing all curriculum requirements of:</div>
+      <div style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 8px 0;" id="modal-cert-course">Course Title</div>
+      <div style="font-size: 11px; font-weight: 700; color: #d97706;" id="modal-cert-grade">Grade: A+ (Distinction)</div>
+      
+      <div class="cert-seal">🏅</div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 14px; border-top: 1px dashed rgba(217, 119, 6, 0.3);">
+        <div style="text-align: left;">
+          <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">Issued on: <strong id="modal-cert-date" style="color: #0f172a;">Oct 27, 2026</strong></div>
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: #fffbeb; border: 1.5px solid #d97706; padding: 5px 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(217, 119, 6, 0.1);">
+            <span style="font-size: 10px; font-weight: 800; color: #92400e; letter-spacing: 0.5px; text-transform: uppercase;">Certificate ID:</span>
+            <span id="modal-cert-code" style="font-family: var(--font-mono); font-weight: 800; font-size: 13px; color: #b45309;">SKO-AI-91455</span>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-family: Georgia, serif; font-style: italic; font-size: 1.15rem; color: #0f172a; border-bottom: 1.5px solid #94a3b8; padding-bottom: 2px;">Dev Bhushan</div>
+          <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; font-weight: 700;">Academic Director</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backend Unique Primary Key Verification Info Box -->
+    <div class="cert-modal-hide-print" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-md); padding: 10px 14px; margin-bottom: 16px; font-size: 12px; flex-wrap: wrap; gap: 8px;">
+      <div class="flex items-center gap-2">
+        <span style="font-size: 16px;">🔑</span>
+        <span style="color: var(--text-600); font-weight: 600;">Unique Primary Key in Database:</span>
+        <strong id="modal-cert-pk-display" style="font-family: var(--font-mono); color: var(--primary); font-size: 13px;">SKO-AI-91455</strong>
+      </div>
+      <button class="btn btn-outline btn-xs" id="modal-copy-id-btn" style="padding: 4px 10px; font-size: 11px;">📋 Copy ID</button>
+    </div>
+
+    <!-- Download & Export Options Group -->
+    <div class="cert-modal-actions" style="background: var(--surface-2, rgba(0,0,0,0.02)); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+        <span style="font-size: 12px; font-weight: 700; color: var(--text-800); text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px;">
+          <span>📥</span> Download & Export Options
+        </span>
+        <span class="badge" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; font-size: 10px; font-weight: 700;">High-Res 300 DPI</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
+        <!-- Download as PDF -->
+        <button class="btn btn-primary btn-sm" id="modal-download-pdf-btn" style="justify-content: center; gap: 6px; padding: 10px 12px; font-weight: 700;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          <span>Download PDF</span>
+        </button>
+
+        <!-- Download as PNG -->
+        <button class="btn btn-outline btn-sm" id="modal-download-png-btn" style="justify-content: center; gap: 6px; padding: 10px 12px; font-weight: 700; background: var(--surface);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          <span>Download PNG</span>
+        </button>
+
+        <!-- Download as JPG -->
+        <button class="btn btn-outline btn-sm" id="modal-download-jpg-btn" style="justify-content: center; gap: 6px; padding: 10px 12px; font-weight: 700; background: var(--surface);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          <span>Download JPG</span>
+        </button>
+
+        <!-- Print -->
+        <button class="btn btn-outline btn-sm" id="modal-print-btn" style="justify-content: center; gap: 6px; padding: 10px 12px; font-weight: 700; background: var(--surface);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          <span>Print / Save</span>
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; flex-wrap: wrap; gap: 8px;">
+        <span style="color: var(--text-500); font-size: 11px;">Share public verification link for LinkedIn, resume & portfolios:</span>
+        <button class="btn btn-outline btn-xs" id="modal-share-btn" style="gap: 5px; padding: 5px 12px; font-weight: 600;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          <span>Share Credential</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Bottom Navigation bar -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-items">
+    <a href="dashboard.html" class="mobile-nav-item">
+      <span class="mni">🏠</span>Dashboard
+    </a>
+    <a href="courses.html" class="mobile-nav-item">
+      <span class="mni">📚</span>Courses
+    </a>
+    <a href="ai-coach.html" class="mobile-nav-item">
+      <span class="mni">🤖</span>Coach
+    </a>
+    <a href="progress.html" class="mobile-nav-item">
+      <span class="mni">📈</span>Progress
+    </a>
+    <a href="profile.html" class="mobile-nav-item">
+      <span class="mni">👤</span>Profile
+    </a>
+  </div>
+</nav>
+
+<script src="js/html2pdf.bundle.min.js"></script>
+<script type="module" src="js/certificates.js?v=3"></script>
+</body>
+</html>

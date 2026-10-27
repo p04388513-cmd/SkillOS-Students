@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Select your SkillOS learning pathway — Independent Learner or College-Referred Student.">
+  <title>Choose Your Learning Track — SkillOS</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ── Pathway Selection Page Styles ── */
+    body {
+      background: var(--surface);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font, 'Inter', -apple-system, sans-serif);
+      color: var(--text-900);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Background Glows */
+    .pathway-bg-glow {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.45;
+    }
+    .glow-blob-1 {
+      width: 500px;
+      height: 500px;
+      background: rgba(34, 197, 94, 0.22);
+      top: -120px;
+      left: -100px;
+    }
+    .glow-blob-2 {
+      width: 480px;
+      height: 480px;
+      background: rgba(99, 102, 241, 0.22);
+      bottom: -100px;
+      right: -80px;
+    }
+
+    /* Top Navigation */
+    .pathway-nav {
+      position: relative;
+      z-index: 10;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .pathway-nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pathway-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .pathway-logo-text {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-900);
+    }
+    .pathway-logo-text em {
+      color: var(--primary);
+      font-style: normal;
+    }
+
+    /* Main Content */
+    .pathway-main {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      padding: 60px 0 80px;
+      display: flex;
+      align-items: center;
+    }
+    .pathway-header {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 48px;
+    }
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: var(--primary-50);
+      color: var(--primary-dark);
+      border: 1px solid var(--primary-200);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+    .pathway-title {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      color: var(--text-900);
+    }
+    .pathway-desc {
+      font-size: 1.05rem;
+      color: var(--text-500);
+      line-height: 1.6;
+    }
+
+    /* Cards Grid */
+    .pathway-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .pathway-selection-card {
+      background: #ffffff;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+    .pathway-selection-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(240, 253, 244, 0.5) 100%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    /* Hover & Active States */
+    .pathway-selection-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 40px rgba(22, 163, 74, 0.12);
+    }
+    .pathway-selection-card:hover::before {
+      opacity: 1;
+    }
+
+    /* Specific Accent: Independent (Green) */
+    .pathway-card-independent:hover {
+      border-color: var(--primary);
+    }
+    .pathway-card-independent .card-icon-wrap {
+      background: var(--primary-50);
+      color: var(--primary);
+      border: 1px solid var(--primary-100);
+    }
+    .pathway-card-independent .track-badge {
+      background: var(--primary-50);
+      color: var(--primary-dark);
+      border: 1px solid var(--primary-200);
+    }
+
+    /* Specific Accent: College Referred (Indigo/Purple) */
+    .pathway-card-college:hover {
+      border-color: #6366f1;
+      box-shadow: 0 16px 40px rgba(99, 102, 241, 0.14);
+    }
+    .pathway-card-college .card-icon-wrap {
+      background: #eef2ff;
+      color: #4f46e5;
+      border: 1px solid #c7d2fe;
+    }
+    .pathway-card-college .track-badge {
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+    .pathway-card-college .btn-track-action {
+      background: #4f46e5;
+    }
+    .pathway-card-college .btn-track-action:hover {
+      background: #4338ca;
+    }
+
+    /* Card Inner Content */
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .card-icon-wrap {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      transition: transform 0.25s ease;
+    }
+    .pathway-selection-card:hover .card-icon-wrap {
+      transform: scale(1.08);
+    }
+    .track-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .card-heading {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .card-subtext {
+      font-size: 0.925rem;
+      color: var(--text-500);
+      line-height: 1.55;
+      margin-bottom: 28px;
+    }
+
+    .feature-checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 32px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+    .feature-check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.885rem;
+      color: var(--text-700);
+      line-height: 1.45;
+    }
+    .check-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary-100);
+      color: var(--primary-dark);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .pathway-card-college .check-icon {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    .btn-track-action {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border: none;
+      color: #fff;
+      background: var(--primary);
+    }
+    .btn-track-action:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Bottom Info Note */
+    .pathway-footer-note {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.875rem;
+      color: var(--text-500);
+    }
+    .pathway-footer-note a {
+      color: var(--primary);
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .pathway-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .pathway-main {
+        padding: 40px 0 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient background glow elements -->
+  <div class="pathway-bg-glow">
+    <div class="glow-blob glow-blob-1"></div>
+    <div class="glow-blob glow-blob-2"></div>
+  </div>
+
+  <!-- NAVIGATION -->
+  <header class="pathway-nav">
+    <div class="container">
+      <div class="pathway-nav-inner">
+        <a href="index.html" class="pathway-logo">
+          <img src="images/logo.png" alt="SkillOS Logo" style="height:34px; border-radius: var(--r-sm);">
+          <span class="pathway-logo-text">Skill<em>OS</em></span>
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="text-sm text-muted" style="display:none; @media(min-width:640px){display:inline;}">Already registered?</span>
+          <a href="login.html" class="btn btn-ghost btn-sm" style="font-weight:600;">Log In</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN PATHWAY SELECTION SECTION -->
+  <main class="pathway-main">
+    <div class="container">
+      <div class="pathway-header">
+        <span class="step-pill">✨ Step 1 of 2 • Pathway Selection</span>
+        <h1 class="pathway-title">How will you be learning on <span class="text-gradient">SkillOS</span>?</h1>
+        <p class="pathway-desc">
+          Choose your track to customize your AI Coach, personalized curriculum syllabus, assignments, and verifiable certificates.
+        </p>
+      </div>
+
+      <!-- TWO INTERACTIVE PATHWAY CARDS -->
+      <div class="pathway-grid">
+
+        <!-- CARD 1: INDEPENDENT LEARNER -->
+        <a href="login.html?tab=register&type=independent" class="pathway-selection-card pathway-card-independent" id="card-independent">
+          <div class="card-top">
+            <div class="card-icon-wrap">🚀</div>
+            <span class="track-badge">Self-Paced Track</span>
+          </div>
+
+          <h2 class="card-heading">Independent Student</h2>
+          <p class="card-subtext">
+            For self-directed developers, career switchers, and solo learners looking to master skills on their own schedule.
+          </p>
+
+          <ul class="feature-checklist">
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>150+ Open Courses:</strong> Web, Python, ML, Cloud & DevOps</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>24/7 Gemini 2.5 AI Coach:</strong> Instant code debugging & concept explanations</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>Interactive Progress:</strong> Study streaks, XP points & skill badge tracking</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>Global Credential:</strong> SkillOS Verifiable Digital Certificate of Completion</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>No College Code Required:</strong> Start learning immediately</span>
+            </li>
+          </ul>
+
+          <div class="btn-track-action">
+            Continue as Independent Learner <span>→</span>
+          </div>
+        </a>
+
+        <!-- CARD 2: COLLEGE-REFERRED STUDENT -->
+        <a href="login.html?tab=register&type=college_referred" class="pathway-selection-card pathway-card-college" id="card-college">
+          <div class="card-top">
+            <div class="card-icon-wrap">🎓</div>
+            <span class="track-badge">College Track</span>
+          </div>
+
+          <h2 class="card-heading">College-Referred Student</h2>
+          <p class="card-subtext">
+            For students joining via an academic institution, college invitation token, professor, or campus batch.
+          </p>
+
+          <ul class="feature-checklist">
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>University Curriculum:</strong> Mapped to your semester & department syllabus</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>Classroom Assignments:</strong> Professor tasks, deadlines & lecture timelines</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-item check-icon">✓</span>
+              <span><strong>Curriculum AI Coach:</strong> Socratic tutoring tailored to university exams</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>Official University Certificate:</strong> Co-branded with college name & roll no.</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="check-icon">✓</span>
+              <span><strong>Campus Benchmarks:</strong> Section leaderboards & department analytics</span>
+            </li>
+          </ul>
+
+          <div class="btn-track-action">
+            Enter with College Code <span>→</span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- REASSURANCE NOTE -->
+      <div class="pathway-footer-note">
+        💡 Not sure which to pick? You can start as an <strong>Independent Student</strong> and connect a college code later in your Settings.
+      </div>
+    </div>
+  </main>
+</body>
+</html>

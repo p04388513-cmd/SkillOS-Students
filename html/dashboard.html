@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Your SkillOS learning dashboard — track progress, continue courses, and access your AI tutor.">
+  <title>Dashboard — SkillOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="topnav-logo">
+        <div class="logo-mark">S</div>
+        <span class="logo-text">Skill<span>OS</span></span>
+      </a>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <a href="dashboard.html" class="sidebar-link active" id="nav-dashboard">
+        <span class="link-icon">🏠</span> Dashboard
+      </a>
+      <a href="courses.html" class="sidebar-link" id="nav-courses">
+        <span class="link-icon">📚</span> Courses
+        <span class="link-badge">6</span>
+      </a>
+      <a href="ai-tutor.html" class="sidebar-link" id="nav-ai">
+        <span class="link-icon">🤖</span> AI Tutor
+      </a>
+      <a href="progress.html" class="sidebar-link" id="nav-progress">
+        <span class="link-icon">📈</span> My Progress
+      </a>
+
+      <div class="sidebar-section-label" style="margin-top:8px">Account</div>
+      <a href="profile.html" class="sidebar-link" id="nav-profile">
+        <span class="link-icon">👤</span> Profile
+      </a>
+      <button class="sidebar-link" onclick="logout()" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--text-secondary)">
+        <span class="link-icon">🚪</span> Sign Out
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='profile.html'">
+        <div class="avatar-placeholder avatar-md" id="sidebar-avatar" style="background:var(--grad-primary)">
+          <span data-user-avatar style="font-size:14px;font-weight:700"></span>
+        </div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name truncate" data-user-name>Loading…</div>
+          <div class="sidebar-user-role text-xs text-muted">Student</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebar-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;backdrop-filter:blur(2px)"></div>
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <main class="main-content">
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle" id="today-date"></p>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <button class="hamburger" id="hamburger-btn" style="display:none">
+            <span></span><span></span><span></span>
+          </button>
+          <a href="ai-tutor.html" class="btn btn-primary btn-sm">🤖 Ask AI Tutor</a>
+          <div class="notif-btn" id="notif-btn" data-dropdown="notif-menu">
+            🔔
+            <span class="notif-count">3</span>
+          </div>
+          <div class="dropdown-menu hidden" id="notif-menu" style="right:0;width:320px">
+            <div style="padding:var(--space-3) var(--space-4);font-weight:700;border-bottom:1px solid var(--border)">Notifications</div>
+            <div class="dropdown-item">🎓 Welcome to SkillOS! Start your journey</div>
+            <div class="dropdown-item">📚 Python for Beginners — New lesson available</div>
+            <div class="dropdown-item">🏆 You earned 10 points today!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page body -->
+    <div class="page-body">
+      <!-- Welcome banner -->
+      <div class="welcome-banner animate-fade-in-up">
+        <div class="welcome-banner-bg">
+          <div class="wb-circle wb-circle-1"></div>
+          <div class="wb-circle wb-circle-2"></div>
+        </div>
+        <div class="welcome-content">
+          <div class="welcome-greeting" id="welcome-greeting">Good morning</div>
+          <h2 class="welcome-name">Welcome back, <span data-user-name>Student</span>! 👋</h2>
+          <p class="welcome-subtitle">Ready to continue your learning journey? You're doing great!</p>
+          <div class="welcome-streak">
+            🔥 <span id="streak-count">0</span>-day learning streak — keep it up!
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card animate-fade-in-up delay-100">
+          <div class="stat-icon">📚</div>
+          <div class="stat-value" id="stat-courses">0</div>
+          <div class="stat-label">Courses Enrolled</div>
+          <div class="stat-change up">↑ Active learner</div>
+        </div>
+        <div class="stat-card animate-fade-in-up delay-200">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" id="stat-minutes">0</div>
+          <div class="stat-label">Minutes Learned</div>
+          <div class="stat-change up">↑ This week</div>
+        </div>
+        <div class="stat-card animate-fade-in-up delay-300">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value" id="stat-streak">0</div>
+          <div class="stat-label">Day Streak</div>
+          <div class="stat-change up">↑ Going strong!</div>
+        </div>
+        <div class="stat-card animate-fade-in-up delay-400">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value" id="stat-points">0</div>
+          <div class="stat-label">Total Points</div>
+          <div class="stat-change up">↑ +10 today</div>
+        </div>
+      </div>
+
+      <!-- Dashboard grid -->
+      <div class="dashboard-grid">
+        <!-- Main column -->
+        <div class="dashboard-main">
+          <!-- Continue learning -->
+          <div class="section-block animate-fade-in-up delay-200">
+            <div class="section-block-header">
+              <div class="section-block-title">📖 Continue Learning</div>
+              <a href="courses.html" class="btn btn-ghost btn-xs">Browse All →</a>
+            </div>
+            <div class="section-block-body">
+              <div class="continue-learning-list" id="continue-learning-list">
+                <!-- Skeleton loaders -->
+                <div class="skeleton" style="height:80px;border-radius:var(--radius-lg)"></div>
+                <div class="skeleton" style="height:80px;border-radius:var(--radius-lg)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent activity -->
+          <div class="section-block animate-fade-in-up delay-300">
+            <div class="section-block-header">
+              <div class="section-block-title">⚡ Recent Activity</div>
+            </div>
+            <div class="section-block-body" style="padding-top:0;padding-bottom:0">
+              <div class="activity-list" id="activity-list">
+                <div class="skeleton" style="height:56px;margin:var(--space-3) 0;border-radius:var(--radius-sm)"></div>
+                <div class="skeleton" style="height:56px;margin:var(--space-3) 0;border-radius:var(--radius-sm)"></div>
+                <div class="skeleton" style="height:56px;margin:var(--space-3) 0;border-radius:var(--radius-sm)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side column -->
+        <div class="dashboard-side">
+          <!-- AI Tutor panel -->
+          <div class="ai-panel animate-fade-in-up delay-100">
+            <div class="ai-panel-bg"></div>
+            <div class="ai-panel-content">
+              <div class="ai-panel-icon">🤖</div>
+              <h3 class="ai-panel-title">AI Tutor Ready!</h3>
+              <p class="ai-panel-desc">Stuck on a concept? Need help with code? Your personal AI tutor is available 24/7.</p>
+              <a href="ai-tutor.html" class="btn btn-white btn-sm" style="width:100%;justify-content:center">
+                Start a Conversation →
+              </a>
+            </div>
+          </div>
+
+          <!-- Weekly calendar -->
+          <div class="section-block animate-fade-in-up delay-300">
+            <div class="section-block-header">
+              <div class="section-block-title">📅 This Week</div>
+            </div>
+            <div class="section-block-body">
+              <div class="calendar-week" id="calendar-week"></div>
+            </div>
+          </div>
+
+          <!-- Streak widget -->
+          <div class="streak-widget animate-fade-in-up delay-400">
+            <div class="streak-flame">🔥</div>
+            <div class="streak-info">
+              <div class="value" id="streak-widget-count">0</div>
+              <div class="label">Day Learning Streak</div>
+              <div class="label" style="margin-top:4px;color:var(--primary);font-weight:600;font-size:var(--text-xs)">Keep going — you're on fire!</div>
+            </div>
+          </div>
+
+          <!-- Suggested courses -->
+          <div class="section-block animate-fade-in-up delay-500">
+            <div class="section-block-header">
+              <div class="section-block-title">💡 Suggested For You</div>
+            </div>
+            <div class="suggested-list" id="suggested-list">
+              <div class="skeleton" style="height:56px;border-radius:var(--radius-lg)"></div>
+              <div class="skeleton" style="height:56px;border-radius:var(--radius-lg)"></div>
+              <div class="skeleton" style="height:56px;border-radius:var(--radius-lg)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-inner">
+    <a href="dashboard.html" class="mobile-nav-item active">
+      <span class="mobile-nav-icon">🏠</span>Home
+    </a>
+    <a href="courses.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📚</span>Courses
+    </a>
+    <a href="ai-tutor.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🤖</span>AI Tutor
+    </a>
+    <a href="progress.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📈</span>Progress
+    </a>
+    <a href="profile.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">👤</span>Profile
+    </a>
+  </div>
+</nav>
+
+<script>
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+</script>
+<script type="module">
+  import { logout } from '../js/app.js';
+  window.logout = logout;
+</script>
+<script type="module" src="../js/dashboard.js"></script>
+</body>
+</html>

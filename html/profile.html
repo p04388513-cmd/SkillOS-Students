@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Manage your SkillOS profile — update name, bio, avatar, and account settings.">
+  <title>Profile — SkillOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+
+  <style>
+    .profile-header-card {
+      background: var(--grad-primary);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-10);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: var(--space-8);
+    }
+    .profile-header-bg {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+    }
+    .profile-header-content { position: relative; z-index: 1; display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; }
+    .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+    .profile-avatar-img {
+      width: 96px; height: 96px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.4);
+      object-fit: cover;
+    }
+    .profile-initials {
+      width: 96px; height: 96px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;
+      font-size: var(--text-3xl); font-weight: var(--font-extrabold); color: #fff;
+    }
+    .profile-avatar-edit {
+      position: absolute; bottom: 0; right: 0;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #fff; color: var(--primary); display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; box-shadow: var(--shadow-sm); border: 2px solid var(--light-green);
+    }
+    .profile-info { flex: 1; }
+    .profile-name { font-size: var(--text-3xl); font-weight: 800; margin-bottom: 4px; }
+    .profile-email { font-size: var(--text-sm); color: rgba(255,255,255,0.8); margin-bottom: var(--space-4); }
+    .profile-mini-stats { display: flex; gap: var(--space-8); }
+    .mini-stat-value { font-size: var(--text-2xl); font-weight: 800; }
+    .mini-stat-label { font-size: var(--text-xs); color: rgba(255,255,255,0.7); }
+
+    .profile-grid { display: grid; grid-template-columns: 1fr 340px; gap: var(--space-8); }
+    @media (max-width: 768px) { .profile-grid { grid-template-columns: 1fr; } }
+
+    .settings-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      margin-bottom: var(--space-6);
+    }
+    .settings-card-header {
+      padding: var(--space-5) var(--space-6);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      display: flex; align-items: center; gap: var(--space-2);
+    }
+    .settings-card-body { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); }
+
+    .danger-zone {
+      background: var(--error-bg);
+      border: 1px solid #FCA5A5;
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+    }
+    .danger-zone-title { font-size: var(--text-base); font-weight: 700; color: var(--error); margin-bottom: var(--space-3); }
+    .danger-zone-desc { font-size: var(--text-sm); color: #7F1D1D; margin-bottom: var(--space-4); }
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="topnav-logo"><div class="logo-mark">S</div><span class="logo-text">Skill<span>OS</span></span></a>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon">🏠</span> Dashboard</a>
+      <a href="courses.html" class="sidebar-link"><span class="link-icon">📚</span> Courses</a>
+      <a href="ai-tutor.html" class="sidebar-link"><span class="link-icon">🤖</span> AI Tutor</a>
+      <a href="progress.html" class="sidebar-link"><span class="link-icon">📈</span> My Progress</a>
+      <div class="sidebar-section-label">Account</div>
+      <a href="profile.html" class="sidebar-link active"><span class="link-icon">👤</span> Profile</a>
+      <button class="sidebar-link" onclick="logout()" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--text-secondary)"><span class="link-icon">🚪</span> Sign Out</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar-placeholder avatar-md" style="background:var(--grad-primary)"><span data-user-avatar style="font-size:14px;font-weight:700"></span></div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name truncate" data-user-name>Loading…</div><div class="sidebar-user-role text-xs text-muted">Student</div></div>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;backdrop-filter:blur(2px)"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div><h1 class="page-title">Profile Settings</h1><p class="page-subtitle">Manage your account and preferences</p></div>
+        <button class="hamburger" id="hamburger-btn" style="display:none"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Profile header card -->
+      <div class="profile-header-card animate-fade-in-up">
+        <div class="profile-header-bg"></div>
+        <div class="profile-header-content">
+          <div class="profile-avatar-wrap">
+            <img src="" alt="Avatar" class="profile-avatar-img" id="profile-avatar" style="display:none">
+            <div class="profile-initials" id="profile-initials">S</div>
+            <div class="profile-avatar-edit" id="avatar-upload-btn" title="Change photo">📷</div>
+            <input type="file" id="avatar-file-input" accept="image/*" style="display:none">
+          </div>
+          <div class="profile-info">
+            <div class="profile-name" data-user-name>Loading…</div>
+            <div class="profile-email" data-user-email></div>
+            <div class="profile-mini-stats">
+              <div><div class="mini-stat-value" id="prof-points">0</div><div class="mini-stat-label">Points</div></div>
+              <div><div class="mini-stat-value" id="prof-streak">0</div><div class="mini-stat-label">Day Streak</div></div>
+              <div><div class="mini-stat-value" id="prof-courses">0</div><div class="mini-stat-label">Courses</div></div>
+              <div><div class="mini-stat-value" id="prof-minutes">0</div><div class="mini-stat-label">Minutes</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="badge badge-green" id="auth-provider">Email Account</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:var(--space-2)">Member since <span id="prof-joined">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <!-- Left: Edit forms -->
+        <div>
+          <!-- Basic info -->
+          <div class="settings-card animate-fade-in-up delay-100">
+            <div class="settings-card-header">👤 Personal Information</div>
+            <div class="settings-card-body">
+              <div class="input-group">
+                <label class="input-label" for="profile-name">Full Name</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">👤</span>
+                  <input type="text" id="profile-name" class="input-field has-icon" placeholder="Your full name">
+                </div>
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="profile-email">Email Address</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">📧</span>
+                  <input type="email" id="profile-email" class="input-field has-icon" placeholder="your@email.com" disabled style="opacity:0.6">
+                </div>
+                <span class="input-hint">Email cannot be changed after registration</span>
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="profile-bio">Bio</label>
+                <textarea id="profile-bio" class="textarea-field" placeholder="Tell us a bit about yourself and your learning goals…" rows="3"></textarea>
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="profile-goal">Learning Goal</label>
+                <select id="profile-goal" class="select-field">
+                  <option value="">Select your primary goal</option>
+                  <option value="career">Career advancement</option>
+                  <option value="skills">Learn new skills</option>
+                  <option value="hobby">Personal interest</option>
+                  <option value="academic">Academic study</option>
+                  <option value="business">Build a business</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="save-profile-btn">💾 Save Changes</button>
+            </div>
+          </div>
+
+          <!-- Password change -->
+          <div class="settings-card animate-fade-in-up delay-200">
+            <div class="settings-card-header">🔒 Security</div>
+            <div class="settings-card-body">
+              <p style="font-size:var(--text-sm);color:var(--text-secondary)">Keep your account secure with a strong password.</p>
+              <button class="btn btn-outline btn-sm" id="change-password-toggle">Change Password</button>
+              <div id="change-password-section" class="hidden" style="display:flex;flex-direction:column;gap:var(--space-4)">
+                <div class="input-group">
+                  <label class="input-label">New Password</label>
+                  <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="new-password" class="input-field has-icon" placeholder="New password (min 8 chars)">
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-sm">Update Password</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Quick stats & danger -->
+        <div>
+          <!-- Quick links -->
+          <div class="settings-card animate-fade-in-up delay-200">
+            <div class="settings-card-header">⚡ Quick Links</div>
+            <div class="settings-card-body" style="padding-top:var(--space-3)">
+              <a href="courses.html" class="dropdown-item" style="border-radius:var(--radius-md)">📚 Browse Courses</a>
+              <a href="ai-tutor.html" class="dropdown-item" style="border-radius:var(--radius-md)">🤖 Open AI Tutor</a>
+              <a href="progress.html" class="dropdown-item" style="border-radius:var(--radius-md)">📈 View Progress</a>
+              <a href="dashboard.html" class="dropdown-item" style="border-radius:var(--radius-md)">🏠 Go to Dashboard</a>
+            </div>
+          </div>
+
+          <!-- Sign out -->
+          <div class="settings-card animate-fade-in-up delay-300">
+            <div class="settings-card-header">🚪 Session</div>
+            <div class="settings-card-body">
+              <p style="font-size:var(--text-sm);color:var(--text-secondary)">You are currently signed in. Your progress is automatically saved.</p>
+              <button class="btn btn-white" id="signout-btn" style="width:100%">🚪 Sign Out</button>
+            </div>
+          </div>
+
+          <!-- Danger zone -->
+          <div class="danger-zone animate-fade-in-up delay-400">
+            <div class="danger-zone-title">⚠️ Danger Zone</div>
+            <div class="danger-zone-desc">Permanently delete your account and all learning data. This action cannot be undone.</div>
+            <button class="btn btn-danger btn-sm" id="delete-account-btn">Delete My Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile nav -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-inner">
+    <a href="dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">🏠</span>Home</a>
+    <a href="courses.html" class="mobile-nav-item"><span class="mobile-nav-icon">📚</span>Courses</a>
+    <a href="ai-tutor.html" class="mobile-nav-item"><span class="mobile-nav-icon">🤖</span>AI Tutor</a>
+    <a href="progress.html" class="mobile-nav-item"><span class="mobile-nav-icon">📈</span>Progress</a>
+    <a href="profile.html" class="mobile-nav-item active"><span class="mobile-nav-icon">👤</span>Profile</a>
+  </div>
+</nav>
+
+<script type="module">
+  import { logout } from '../js/app.js';
+  window.logout = logout;
+</script>
+<script type="module" src="../js/profile.js"></script>
+</body>
+</html>

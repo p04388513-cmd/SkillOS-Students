@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Track your learning progress on SkillOS — course completions, badges, streaks, and activity heatmap.">
+  <title>My Progress — SkillOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="../js/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+
+  <style>
+    /* Progress page specific */
+    .progress-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-6);
+      margin-bottom: var(--space-8);
+    }
+    .progress-section { margin-bottom: var(--space-8); }
+    .progress-section-title { font-size: var(--text-xl); font-weight: 700; margin-bottom: var(--space-5); display:flex;align-items:center;gap:var(--space-2); }
+
+    .progress-course-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition-base);
+    }
+    .progress-course-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .progress-ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+    .progress-ring { width: 80px; height: 80px; }
+    .progress-ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+      color: var(--primary);
+    }
+    .progress-ring-emoji {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      font-size: 18px;
+    }
+    .progress-course-info { flex: 1; }
+    .progress-course-title { font-weight: var(--font-semibold); margin-bottom: 4px; }
+    .progress-course-meta { font-size: var(--text-xs); color: var(--text-muted); }
+
+    #course-progress-grid { display: flex; flex-direction: column; gap: var(--space-4); }
+
+    /* Badges */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: var(--space-4);
+    }
+    .badge-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      text-align: center;
+      box-shadow: var(--shadow-card);
+      transition: all var(--transition-base);
+    }
+    .badge-card.earned {
+      border-color: var(--mid-green);
+      background: var(--pale-green);
+    }
+    .badge-card.locked { opacity: 0.5; filter: grayscale(0.7); }
+    .badge-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .badge-icon { font-size: 40px; margin-bottom: var(--space-3); }
+    .badge-name { font-size: var(--text-sm); font-weight: var(--font-bold); margin-bottom: 4px; }
+    .badge-desc { font-size: 11px; color: var(--text-muted); }
+
+    /* Heatmap */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      grid-template-rows: repeat(7, 1fr);
+      gap: 3px;
+      grid-auto-flow: column;
+    }
+    .heatmap-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: var(--border);
+      transition: transform var(--transition-fast);
+    }
+    .heatmap-cell:hover { transform: scale(1.3); }
+    .heatmap-cell.level-1 { background: #BBF7D0; }
+    .heatmap-cell.level-2 { background: #86EFAC; }
+    .heatmap-cell.level-3 { background: #4ADE80; }
+    .heatmap-cell.level-4 { background: var(--primary); }
+
+    .heatmap-legend { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); font-size: 11px; color: var(--text-muted); }
+    .heatmap-legend-cells { display: flex; gap: 3px; }
+    .heatmap-legend-cell { width: 12px; height: 12px; border-radius: 2px; background: var(--border); }
+    .heatmap-legend-cell:nth-child(2) { background: #BBF7D0; }
+    .heatmap-legend-cell:nth-child(3) { background: #86EFAC; }
+    .heatmap-legend-cell:nth-child(4) { background: #4ADE80; }
+    .heatmap-legend-cell:nth-child(5) { background: var(--primary); }
+
+    .overview-chart-wrap {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-card);
+      max-width: 300px;
+    }
+    .progress-grid-2 { display: grid; grid-template-columns: 1fr 300px; gap: var(--space-8); }
+    @media (max-width: 768px) { .progress-grid-2 { grid-template-columns: 1fr; } .progress-stats-row { grid-template-columns: repeat(2,1fr); } .heatmap-grid { grid-template-columns: repeat(8,1fr); } }
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="topnav-logo"><div class="logo-mark">S</div><span class="logo-text">Skill<span>OS</span></span></a>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon">🏠</span> Dashboard</a>
+      <a href="courses.html" class="sidebar-link"><span class="link-icon">📚</span> Courses</a>
+      <a href="ai-tutor.html" class="sidebar-link"><span class="link-icon">🤖</span> AI Tutor</a>
+      <a href="progress.html" class="sidebar-link active"><span class="link-icon">📈</span> My Progress</a>
+      <div class="sidebar-section-label">Account</div>
+      <a href="profile.html" class="sidebar-link"><span class="link-icon">👤</span> Profile</a>
+      <button class="sidebar-link" onclick="logout()" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--text-secondary)"><span class="link-icon">🚪</span> Sign Out</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='profile.html'">
+        <div class="avatar-placeholder avatar-md" style="background:var(--grad-primary)"><span data-user-avatar style="font-size:14px;font-weight:700"></span></div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name truncate" data-user-name>Loading…</div><div class="sidebar-user-role text-xs text-muted">Student</div></div>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;backdrop-filter:blur(2px)"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div><h1 class="page-title">My Progress</h1><p class="page-subtitle">Track your learning journey and achievements</p></div>
+        <div style="display:flex;gap:var(--space-3)">
+          <button class="hamburger" id="hamburger-btn" style="display:none"><span></span><span></span><span></span></button>
+          <a href="courses.html" class="btn btn-outline btn-sm">Browse More Courses</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Stats row -->
+      <div class="progress-stats-row">
+        <div class="stat-card animate-fade-in-up">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value" id="total-points">0</div>
+          <div class="stat-label">Total Points</div>
+        </div>
+        <div class="stat-card animate-fade-in-up delay-100">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value" id="current-streak">0</div>
+          <div class="stat-label">Day Streak</div>
+        </div>
+        <div class="stat-card animate-fade-in-up delay-200">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" id="total-minutes">0</div>
+          <div class="stat-label">Minutes Learned</div>
+        </div>
+        <div class="stat-card animate-fade-in-up delay-300">
+          <div class="stat-icon">📚</div>
+          <div class="stat-value" id="courses-enrolled">0</div>
+          <div class="stat-label">Courses Enrolled</div>
+        </div>
+      </div>
+
+      <!-- Course progress + Overview chart -->
+      <div class="progress-section">
+        <h2 class="progress-section-title">📚 Course Progress</h2>
+        <div class="progress-grid-2">
+          <div id="course-progress-grid">
+            <div class="skeleton" style="height:100px;border-radius:var(--radius-xl)"></div>
+            <div class="skeleton" style="height:100px;border-radius:var(--radius-xl)"></div>
+          </div>
+          <div class="overview-chart-wrap">
+            <h3 style="font-size:var(--text-sm);font-weight:700;margin-bottom:var(--space-4);text-align:center">Overview</h3>
+            <canvas id="overview-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Heatmap -->
+      <div class="progress-section">
+        <h2 class="progress-section-title">📅 Activity Heatmap</h2>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-6);box-shadow:var(--shadow-card)">
+          <div class="heatmap-grid" id="heatmap-grid"></div>
+          <div class="heatmap-legend">
+            Less
+            <div class="heatmap-legend-cells">
+              <div class="heatmap-legend-cell"></div>
+              <div class="heatmap-legend-cell"></div>
+              <div class="heatmap-legend-cell"></div>
+              <div class="heatmap-legend-cell"></div>
+              <div class="heatmap-legend-cell" style="background:var(--primary)"></div>
+            </div>
+            More
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="progress-section">
+        <h2 class="progress-section-title">🏆 Badges & Achievements</h2>
+        <div class="badges-grid" id="badges-grid">
+          <div class="skeleton" style="height:140px;border-radius:var(--radius-xl)"></div>
+          <div class="skeleton" style="height:140px;border-radius:var(--radius-xl)"></div>
+          <div class="skeleton" style="height:140px;border-radius:var(--radius-xl)"></div>
+          <div class="skeleton" style="height:140px;border-radius:var(--radius-xl)"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile nav -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-inner">
+    <a href="dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">🏠</span>Home</a>
+    <a href="courses.html" class="mobile-nav-item"><span class="mobile-nav-icon">📚</span>Courses</a>
+    <a href="ai-tutor.html" class="mobile-nav-item"><span class="mobile-nav-icon">🤖</span>AI Tutor</a>
+    <a href="progress.html" class="mobile-nav-item active"><span class="mobile-nav-icon">📈</span>Progress</a>
+    <a href="profile.html" class="mobile-nav-item"><span class="mobile-nav-icon">👤</span>Profile</a>
+  </div>
+</nav>
+
+<script type="module">
+  import { logout } from '../js/app.js';
+  window.logout = logout;
+</script>
+<script type="module" src="../js/progress.js"></script>
+</body>
+</html>

@@ -1,0 +1,464 @@
+// ============================================================
+//  SkillOS — Authentication Flow (auth.js) - PostgreSQL / REST API
+// ============================================================
+import { showToast, showLoader, hideLoader, setAuthToken, apiFetch, showAlertDialog } from './app.js';
+
+// Setup Tab Switching logic
+function setupTabs() {
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  const panelLogin = document.getElementById('panel-login');
+  const panelRegister = document.getElementById('panel-register');
+  
+  const authTitle = document.getElementById('auth-title');
+  const authSubtitle = document.getElementById('auth-subtitle');
+  
+  if (tabLogin && tabRegister) {
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('active');
+      tabRegister.classList.remove('active');
+      panelLogin?.classList.add('active');
+      panelRegister?.classList.remove('active');
+      if (authTitle) authTitle.textContent = 'Welcome Back';
+      if (authSubtitle) authSubtitle.textContent = 'Log in to continue your learning journey.';
+    });
+
+    tabRegister.addEventListener('click', () => {
+      tabRegister.classList.add('active');
+      tabLogin.classList.remove('active');
+      panelRegister?.classList.add('active');
+      panelLogin?.classList.remove('active');
+      if (authTitle) authTitle.textContent = 'Create Account';
+      if (authSubtitle) authSubtitle.textContent = 'Sign up to start learning with your AI coach.';
+    });
+  }
+
+  // Switch links
+  document.querySelectorAll('[data-switch-tab]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = link.getAttribute('data-switch-tab');
+      if (target === 'register') {
+        tabRegister?.click();
+      } else {
+        tabLogin?.click();
+      }
+    });
+  });
+}
+
+// Password toggle eyes
+function setupPasswordToggles() {
+  document.querySelectorAll('[data-pw-toggle]').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const inputId = toggle.getAttribute('data-pw-toggle');
+      const input = document.getElementById(inputId);
+      if (input) {
+        if (input.type === 'password') {
+          input.type = 'text';
+          toggle.textContent = '🙈';
+        } else {
+          input.type = 'password';
+          toggle.textContent = '👁️';
+        }
+      }
+    });
+  });
+}
+
+// Check password strength
+function setupPasswordStrength() {
+  const regPassword = document.getElementById('reg-password');
+  const bars = document.querySelectorAll('.pw-bar');
+  const label = document.querySelector('.pw-label');
+
+  if (!regPassword) return;
+
+  regPassword.addEventListener('input', () => {
+    const val = regPassword.value;
+    let strength = 0;
+
+    if (val.length >= 8) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/[0-9]/.test(val)) strength++;
+    if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+    bars.forEach((bar, idx) => {
+      bar.className = 'pw-bar';
+      if (idx < strength) {
+        if (strength <= 2) bar.classList.add('weak');
+        else if (strength === 3) bar.classList.add('fair');
+        else if (strength === 4) bar.classList.add('strong');
+      }
+    });
+
+    if (!label) return;
+    if (val.length === 0) {
+      label.textContent = '';
+    } else if (strength <= 2) {
+      label.textContent = 'Weak Password';
+      label.style.color = 'var(--error)';
+    } else if (strength === 3) {
+      label.textContent = 'Good Password';
+      label.style.color = 'var(--warning)';
+    } else {
+      label.textContent = 'Strong Password';
+      label.style.color = 'var(--primary)';
+    }
+  });
+}
+
+// Setup login handler
+function setupLogin() {
+  const form = document.getElementById('login-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+      showToast('Validation Error', 'All fields are required.', 'warning');
+      return;
+    }
+
+    showLoader();
+    try {
+      const data = await apiFetch('/api/auth/login', {
+        method: 'POST',
+        body: { email, password }
+      });
+
+      setAuthToken(data.token);
+      localStorage.setItem('skillos_user', JSON.stringify(data.user));
+
+      showToast('Welcome Back!', 'Redirecting to your dashboard...', 'success');
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 700);
+    } catch (err) {
+      showToast('Authentication Failed', err.message, 'error');
+      hideLoader();
+    }
+  });
+
+  // Forgot password handler
+  const forgotLink = document.getElementById('forgot-password-link');
+  forgotLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const emailVal = document.getElementById('login-email')?.value?.trim() || '';
+    const targetEmail = prompt('Enter your registered email to reset your password:', emailVal);
+    if (!targetEmail) return;
+    const newPass = prompt('Enter your new password (minimum 6 characters):');
+    if (!newPass || newPass.length < 6) {
+      showToast('Validation Error', 'Password must be at least 6 characters.', 'warning');
+      return;
+    }
+    showLoader();
+    apiFetch('/api/auth/reset-password', {
+      method: 'POST',
+      body: { email: targetEmail, newPassword: newPass }
+    }).then(res => {
+      hideLoader();
+      showToast('Password Updated', res.message || 'You can now log in with your new password.', 'success');
+      const passInput = document.getElementById('login-password');
+      const emailInput = document.getElementById('login-email');
+      if (emailInput) emailInput.value = targetEmail;
+      if (passInput) passInput.value = newPass;
+    }).catch(err => {
+      hideLoader();
+      showToast('Reset Failed', err.message, 'error');
+    });
+  });
+}
+
+// Setup pathway configuration in registration form
+function setupPathwayCardsToggle() {
+  const collegeContainer = document.getElementById('college-fields-container');
+  const accountTypeInput = document.getElementById('selected-account-type');
+
+  // Read URL query parameter: ?type=college_referred or ?type=independent
+  const params = new URLSearchParams(window.location.search);
+  const typeParam = params.get('type');
+
+  if (typeParam === 'college_referred') {
+    if (accountTypeInput) accountTypeInput.value = 'college_referred';
+    if (collegeContainer) collegeContainer.style.display = 'block';
+  } else {
+    if (accountTypeInput) accountTypeInput.value = 'independent';
+    if (collegeContainer) collegeContainer.style.display = 'none';
+  }
+}
+
+// Setup Profile Photo Upload with client-side image compression
+function setupAvatarUpload() {
+  const fileInput = document.getElementById('reg-avatar');
+  const uploadBtn = document.getElementById('avatar-upload-btn');
+  const previewTrigger = document.getElementById('avatar-preview-trigger');
+  const previewImg = document.getElementById('avatar-preview-img');
+  const placeholderIcon = document.getElementById('avatar-placeholder-icon');
+  const removeBtn = document.getElementById('avatar-remove-btn');
+  const avatarDataInput = document.getElementById('reg-avatar-data');
+
+  if (!fileInput) return;
+
+  const openPicker = () => fileInput.click();
+  uploadBtn?.addEventListener('click', openPicker);
+  previewTrigger?.addEventListener('click', openPicker);
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Invalid File', 'Please select an image file (PNG, JPG, or WEBP).', 'warning');
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('File Too Large', 'Please select an image smaller than 8MB.', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        // High quality off-screen thumbnail compression (max 200x200)
+        const canvas = document.createElement('canvas');
+        const MAX_DIM = 200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height *= MAX_DIM / width;
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width *= MAX_DIM / height;
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+        // Update preview
+        previewImg.src = compressedDataUrl;
+        previewImg.style.display = 'block';
+        if (placeholderIcon) placeholderIcon.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'inline-block';
+        if (avatarDataInput) avatarDataInput.value = compressedDataUrl;
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  removeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.value = '';
+    if (avatarDataInput) avatarDataInput.value = '';
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+    if (placeholderIcon) placeholderIcon.style.display = 'block';
+    removeBtn.style.display = 'none';
+  });
+}
+
+// Setup registration handler
+function setupRegister() {
+  const form = document.getElementById('register-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const avatar_url = document.getElementById('reg-avatar-data')?.value || '';
+    const college_name = document.getElementById('reg-college-name')?.value.trim() || null;
+    const department_id = document.getElementById('reg-dept')?.value || null;
+    const semester = document.getElementById('reg-semester')?.value || null;
+    const student_college_id = document.getElementById('reg-roll-no')?.value.trim() || null;
+    const college_code = document.getElementById('reg-college-code')?.value.trim() || null;
+    const password = document.getElementById('reg-password').value;
+    const confirmPassword = document.getElementById('reg-confirm').value;
+    const terms = document.getElementById('reg-terms');
+    const account_type = document.getElementById('selected-account-type')?.value || 'independent';
+
+    if (!name || !email || !password || !confirmPassword) {
+      showToast('Validation Error', 'Please fill out all required fields.', 'warning');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showToast('Validation Error', 'Passwords do not match.', 'warning');
+      return;
+    }
+
+    if (password.length < 6) {
+      showToast('Validation Error', 'Password must be at least 6 characters.', 'warning');
+      return;
+    }
+
+    if (terms && !terms.checked) {
+      showToast('Validation Error', 'Please agree to the terms.', 'warning');
+      return;
+    }
+
+    showLoader();
+    try {
+      const data = await apiFetch('/api/auth/register', {
+        method: 'POST',
+        body: { 
+          name, 
+          email, 
+          password, 
+          avatar_url,
+          account_type, 
+          college_name,
+          college_code, 
+          student_college_id, 
+          department_id,
+          semester
+        }
+      });
+
+      setAuthToken(data.token);
+      localStorage.setItem('skillos_user', JSON.stringify(data.user));
+
+      showToast('Account Created!', `Welcome to your ${account_type === 'college_referred' ? 'College' : 'Independent'} workspace!`, 'success');
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 700);
+    } catch (err) {
+      hideLoader();
+      const isAlreadyExists = err.message && /already exists/i.test(err.message);
+      
+      if (isAlreadyExists) {
+        const regEmail = document.getElementById('reg-email');
+        if (regEmail) {
+          regEmail.classList.add('is-error');
+          regEmail.focus();
+        }
+
+        showAlertDialog({
+          title: 'Account Already Exists',
+          message: `An account registered with "${email}" already exists in SkillOS.\n\nPlease log in or reset your password if you forgot it.`,
+          buttonText: 'Switch to Log In',
+          icon: '👤',
+          onOk: () => {
+            const tabLogin = document.getElementById('tab-login');
+            const loginEmail = document.getElementById('login-email');
+            const loginPassword = document.getElementById('login-password');
+            if (loginEmail) loginEmail.value = email;
+            if (tabLogin) tabLogin.click();
+            setTimeout(() => loginPassword?.focus(), 150);
+          }
+        });
+      } else {
+        showToast('Registration Failed', err.message, 'error');
+      }
+    }
+  });
+}
+
+// Setup Google Sign In via Google Identity Services
+async function setupGoogleAuth() {
+  const loginBtn = document.getElementById('google-login-btn');
+  const regBtn = document.getElementById('google-register-btn');
+
+  let googleClientId = '';
+  try {
+    const config = await apiFetch('/api/auth/config').catch(() => ({}));
+    googleClientId = config.googleClientId;
+  } catch (e) {
+    console.warn('Could not load Google client config:', e);
+  }
+
+  const handleGoogleCredentialResponse = async (response) => {
+    showLoader();
+    try {
+      const data = await apiFetch('/api/auth/google', {
+        method: 'POST',
+        body: { credential: response.credential }
+      });
+
+      setAuthToken(data.token);
+      localStorage.setItem('skillos_user', JSON.stringify(data.user));
+
+      showToast('Google Sign-In Success', 'Welcome to SkillOS!', 'success');
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 700);
+    } catch (err) {
+      console.error(err);
+      showToast('Google Sign-In Failed', err.message, 'error');
+      hideLoader();
+    }
+  };
+
+  const initGoogle = () => {
+    if (!googleClientId || !window.google?.accounts?.id) return false;
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleCredentialResponse,
+      auto_select: false
+    });
+
+    return true;
+  };
+
+  const triggerGoogleLogin = () => {
+    if (!googleClientId) {
+      showToast('Configuration Needed', 'Add your GOOGLE_CLIENT_ID to the .env file to enable Google login.', 'warning');
+      return;
+    }
+
+    if (window.google?.accounts?.id) {
+      initGoogle();
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.log('Google prompt note:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
+        }
+      });
+    } else {
+      showToast('Loading', 'Google Sign-In service is connecting, please try again.', 'info');
+    }
+  };
+
+  loginBtn?.addEventListener('click', triggerGoogleLogin);
+  regBtn?.addEventListener('click', triggerGoogleLogin);
+
+  // Poll for Google script load
+  let checkCount = 0;
+  const interval = setInterval(() => {
+    checkCount++;
+    if (initGoogle() || checkCount > 20) {
+      clearInterval(interval);
+    }
+  }, 250);
+}
+
+// Initialise auth controls
+document.addEventListener('DOMContentLoaded', () => {
+  setupTabs();
+  setupPasswordToggles();
+  setupPasswordStrength();
+  setupPathwayCardsToggle();
+  setupAvatarUpload();
+  setupLogin();
+  setupRegister();
+  setupGoogleAuth();
+  
+  // Hide initial page loader on page mount
+  hideLoader();
+});

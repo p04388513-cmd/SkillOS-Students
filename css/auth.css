@@ -1,0 +1,116 @@
+/* ============================================================
+   SkillOS — Auth Pages CSS
+   ============================================================ */
+
+/* ── Auth Split Layout ── */
+.auth-page { display:grid; grid-template-columns:1fr 1fr; min-height:100vh; }
+
+/* ── Left Branding Panel ── */
+.auth-left {
+  background: var(--grad-primary);
+  display: flex; flex-direction: column;
+  padding: 48px; position: relative; overflow: hidden;
+}
+.auth-left-bg { position:absolute; inset:0; pointer-events:none; }
+.al-blob { position:absolute; border-radius:50%; background:rgba(255,255,255,.1); }
+.al-blob-1 { width:420px; height:420px; top:-150px; right:-100px; }
+.al-blob-2 { width:260px; height:260px; bottom:-80px; left:-60px; }
+.al-blob-3 { width:160px; height:160px; top:38%; right:8%; }
+
+.auth-left-content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; color:#fff; }
+
+.auth-logo { display:flex; align-items:center; gap:10px; margin-bottom:auto; }
+.auth-logo .logo-mark { background:rgba(255,255,255,.2); backdrop-filter:blur(8px); }
+.auth-logo-text { font-size:1.25rem; font-weight:800; color:#fff; }
+
+.auth-left-main { flex:1; display:flex; flex-direction:column; justify-content:center; }
+.auth-tagline {
+  font-size:clamp(1.75rem,3vw,2.5rem);
+  font-weight:800; line-height:1.2; margin-bottom:20px;
+  letter-spacing:-.02em;
+}
+.auth-tagline span { color:rgba(255,255,255,.7); }
+.auth-left-desc { font-size:.9375rem; color:rgba(255,255,255,.8); line-height:1.7; margin-bottom:40px; max-width:400px; }
+
+.auth-features { display:flex; flex-direction:column; gap:14px; }
+.auth-feature { display:flex; align-items:center; gap:12px; color:rgba(255,255,255,.9); font-size:.875rem; }
+.af-icon { width:36px; height:36px; border-radius:var(--r-md); background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+
+.auth-stats { display:flex; gap:32px; margin-top:48px; padding-top:32px; border-top:1px solid rgba(255,255,255,.2); }
+.as-val   { font-size:1.5rem; font-weight:800; color:#fff; }
+.as-label { font-size:.75rem; color:rgba(255,255,255,.7); }
+
+/* ── Right Form Panel ── */
+.auth-right {
+  display:flex; align-items:center; justify-content:center;
+  padding:48px; background:var(--bg); overflow-y:auto;
+}
+.auth-form-box { width:100%; max-width:440px; animation:fadeInUp .5s ease both; }
+.auth-form-title { font-size:1.875rem; font-weight:800; margin-bottom:6px; letter-spacing:-.02em; }
+.auth-form-subtitle { font-size:.9375rem; color:var(--text-500); margin-bottom:32px; }
+
+/* ── Auth Tabs ── */
+.auth-tabs { display:flex; gap:2px; background:var(--surface-2); border-radius:var(--r-lg); padding:4px; margin-bottom:28px; }
+.auth-tab {
+  flex:1; padding:10px; text-align:center;
+  font-size:.875rem; font-weight:500; color:var(--text-500);
+  border-radius:var(--r-md); cursor:pointer; transition:all var(--t-base);
+  border:none; background:none; font-family:var(--font);
+}
+.auth-tab.active { background:#fff; color:var(--primary); font-weight:600; box-shadow:var(--shadow-xs); }
+
+.auth-panel { display:none; }
+.auth-panel.active { display:block; animation:fadeIn .3s ease; }
+
+/* ── Google Button ── */
+.btn-google {
+  width:100%; display:flex; align-items:center; justify-content:center; gap:12px;
+  padding:13px; background:#fff; border:2px solid var(--border);
+  border-radius:var(--r-lg); font-size:.9375rem; font-weight:600;
+  color:var(--text-900); cursor:pointer; transition:all var(--t-base);
+  font-family:var(--font);
+}
+.btn-google:hover { background:var(--surface); border-color:var(--text-500); transform:translateY(-1px); box-shadow:var(--shadow-sm); }
+.google-icon { width:20px; height:20px; flex-shrink:0; }
+
+/* ── Auth Form ── */
+.auth-form { display:flex; flex-direction:column; gap:18px; }
+.auth-form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.auth-submit { width:100%; padding:14px; font-size:1rem; margin-top:6px; }
+
+.auth-foot { text-align:center; font-size:.875rem; color:var(--text-500); margin-top:20px; }
+.auth-foot a { color:var(--primary); font-weight:600; text-decoration:underline; text-underline-offset:2px; }
+
+/* ── Password Strength ── */
+.pw-strength { margin-top:6px; }
+.pw-bars { display:flex; gap:4px; margin-bottom:5px; }
+.pw-bar { flex:1; height:4px; background:var(--border); border-radius:var(--r-full); transition:background var(--t-base); }
+.pw-bar.weak   { background:var(--error); }
+.pw-bar.fair   { background:var(--warning); }
+.pw-bar.strong { background:var(--primary); }
+.pw-label { font-size:.6875rem; color:var(--text-400); }
+
+/* ── Password visible toggle ── */
+.pw-toggle {
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  color:var(--text-400); cursor:pointer; font-size:18px; transition:color var(--t-fast);
+  user-select:none;
+}
+.pw-toggle:hover { color:var(--primary); }
+
+/* Hide duplicate native Microsoft Edge password reveal eye icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Responsive */
+@media (max-width:768px) {
+  .auth-page { grid-template-columns:1fr; }
+  .auth-left { display:none; }
+  .auth-right { padding:32px 24px; }
+  .auth-form-row { grid-template-columns:1fr; }
+}

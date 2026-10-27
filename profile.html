@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — SkillOS</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-text">Skill<em>OS</em></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Workspace</div>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="courses.html" class="nav-item">
+        <span class="nav-icon">📚</span> Courses
+      </a>
+      <a href="ai-coach.html" class="nav-item">
+        <span class="nav-icon">🤖</span> AI Coach
+      </a>
+      <a href="assessments.html" class="nav-item">
+        <span class="nav-icon">📝</span> Assessments
+      </a>
+      <a href="progress.html" class="nav-item">
+        <span class="nav-icon">📈</span> Progress
+      </a>
+      <a href="certificates.html" class="nav-item">
+        <span class="nav-icon">🏆</span> Certificates
+      </a>
+
+      <div class="nav-section-label" style="margin-top:16px;">Account Settings</div>
+      <a href="profile.html" class="nav-item active">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="sidebar-user-info" onclick="window.location.href='profile.html'">
+        <div class="user-avatar" id="sidebar-avatar">
+          <span data-user-avatar>S</span>
+        </div>
+        <div style="min-width:0; flex:1;">
+          <div class="user-name truncate" data-user-name>Student</div>
+          <div class="user-role">Premium Member</div>
+        </div>
+      </div>
+      <button class="sidebar-logout-btn" data-logout-btn title="Sign Out" aria-label="Sign Out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <div id="sidebar-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:150; backdrop-filter:blur(2px);"></div>
+
+  <!-- MAIN WINDOW -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">My Profile</h1>
+          <p class="page-subtitle">Customise details and review achievements.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="hamburger" id="hamburger-btn">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- Profile header details card -->
+      <div class="profile-hero animate-fade-in-up">
+        <div class="ph-bg"></div>
+        <div class="ph-content">
+          <div class="ph-avatar-wrap">
+            <div class="ph-avatar" id="profile-initials">S</div>
+            <button class="ph-avatar-edit" id="avatar-edit-trigger" title="Randomize Seed Avatar">📷</button>
+          </div>
+          
+          <div class="ph-info">
+            <h2 class="ph-name" data-user-name>Student</h2>
+            <p class="ph-email" id="profile-email-input-placeholder">student@example.com</p>
+            
+            <div class="ph-stats">
+              <div>
+                <div class="ph-stat-val" id="profile-xp-count">0</div>
+                <div class="ph-stat-label">XP Points</div>
+              </div>
+              <div>
+                <div class="ph-stat-val" id="profile-streak-count">0</div>
+                <div class="ph-stat-label">Streak Days</div>
+              </div>
+              <div>
+                <div class="ph-stat-val" id="profile-courses-count">0</div>
+                <div class="ph-stat-label">Courses</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings splits forms -->
+      <div class="settings-layout">
+        <div class="settings-main">
+          <div class="settings-card anim-fade-in-up d-100">
+            <div class="sc-header"><h3 class="sc-title">👤 Update Profile Data</h3></div>
+            <div class="sc-body">
+              <div class="form-group">
+                <label class="form-label" for="profile-name-input">Full Name</label>
+                <div class="input-wrap">
+                  <span class="input-icon-l">👤</span>
+                  <input type="text" id="profile-name-input" class="form-input icon-l" placeholder="Your name">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="profile-email-input">Email Address</label>
+                <div class="input-wrap">
+                  <span class="input-icon-l">📧</span>
+                  <input type="email" id="profile-email-input" class="form-input icon-l" disabled style="opacity:0.65">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="profile-bio-input">Personal Bio</label>
+                <textarea id="profile-bio-input" class="form-textarea" placeholder="Tell us something about your background..."></textarea>
+              </div>
+
+              <button class="btn btn-primary" id="save-profile-btn" style="width:fit-content;">Save Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-side">
+          <!-- Session control links -->
+          <div class="settings-card anim-fade-in-up d-200">
+            <div class="sc-header"><h3 class="sc-title">⚡ Session Management</h3></div>
+            <div class="sc-body">
+              <p class="text-sm text-muted">Manage your ongoing active sessions.</p>
+              <button class="btn btn-danger btn-full btn-sm" id="profile-signout-btn">🚪 Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile Navigation bar bottom -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-items">
+    <a href="dashboard.html" class="mobile-nav-item">
+      <span class="mni">🏠</span>Dashboard
+    </a>
+    <a href="courses.html" class="mobile-nav-item">
+      <span class="mni">📚</span>Courses
+    </a>
+    <a href="ai-coach.html" class="mobile-nav-item">
+      <span class="mni">🤖</span>Coach
+    </a>
+    <a href="progress.html" class="mobile-nav-item">
+      <span class="mni">📈</span>Progress
+    </a>
+    <a href="profile.html" class="mobile-nav-item active">
+      <span class="mni">👤</span>Profile
+    </a>
+  </div>
+</nav>
+
+<script type="module" src="js/profile.js"></script>
+</body>
+</html>

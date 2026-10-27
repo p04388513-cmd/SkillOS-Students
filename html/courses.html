@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse SkillOS courses — programming, design, data science, marketing, and more.">
+  <title>Courses — SkillOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/courses.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="topnav-logo">
+        <div class="logo-mark">S</div>
+        <span class="logo-text">Skill<span>OS</span></span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon">🏠</span> Dashboard</a>
+      <a href="courses.html" class="sidebar-link active"><span class="link-icon">📚</span> Courses <span class="link-badge">6</span></a>
+      <a href="ai-tutor.html" class="sidebar-link"><span class="link-icon">🤖</span> AI Tutor</a>
+      <a href="progress.html" class="sidebar-link"><span class="link-icon">📈</span> My Progress</a>
+      <div class="sidebar-section-label">Account</div>
+      <a href="profile.html" class="sidebar-link"><span class="link-icon">👤</span> Profile</a>
+      <button class="sidebar-link" onclick="logout()" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--text-secondary)"><span class="link-icon">🚪</span> Sign Out</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='profile.html'">
+        <div class="avatar-placeholder avatar-md" style="background:var(--grad-primary)"><span data-user-avatar style="font-size:14px;font-weight:700"></span></div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name truncate" data-user-name>Loading…</div>
+          <div class="sidebar-user-role text-xs text-muted">Student</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;backdrop-filter:blur(2px)"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">Course Library</h1>
+          <p class="page-subtitle">Discover and enroll in expert-led courses</p>
+        </div>
+        <div style="display:flex;gap:var(--space-3);align-items:center">
+          <button class="hamburger" id="hamburger-btn" style="display:none"><span></span><span></span><span></span></button>
+          <a href="ai-tutor.html" class="btn btn-primary btn-sm">🤖 AI Tutor</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Category chips -->
+      <div class="filter-chips" style="margin-bottom:var(--space-5)">
+        <div class="chip active filter-chip" data-category="">🌟 All Courses</div>
+        <div class="chip filter-chip" data-category="Programming">💻 Programming</div>
+        <div class="chip filter-chip" data-category="Design">🎨 Design</div>
+        <div class="chip filter-chip" data-category="Data Science">📊 Data Science</div>
+        <div class="chip filter-chip" data-category="Marketing">📱 Marketing</div>
+        <div class="chip filter-chip" data-category="Finance">💰 Finance</div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="filter-search search-bar" style="flex:1;min-width:200px">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="course-search" placeholder="Search courses by title, topic, or keyword…">
+        </div>
+        <div class="filter-divider"></div>
+        <select class="filter-select" id="filter-category">
+          <option value="">All Categories</option>
+          <option value="Programming">Programming</option>
+          <option value="Design">Design</option>
+          <option value="Data Science">Data Science</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Finance">Finance</option>
+        </select>
+        <select class="filter-select" id="filter-level">
+          <option value="">All Levels</option>
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+        </select>
+        <select class="filter-select" id="filter-enrolled">
+          <option value="">All Courses</option>
+          <option value="enrolled">My Courses</option>
+          <option value="available">Available</option>
+        </select>
+      </div>
+
+      <!-- Results count -->
+      <p class="results-count" id="results-count">Loading courses…</p>
+
+      <!-- Courses grid -->
+      <div class="courses-grid" id="courses-grid">
+        <!-- Skeleton cards -->
+        <div class="skeleton" style="height:360px;border-radius:var(--radius-xl)"></div>
+        <div class="skeleton" style="height:360px;border-radius:var(--radius-xl)"></div>
+        <div class="skeleton" style="height:360px;border-radius:var(--radius-xl)"></div>
+        <div class="skeleton" style="height:360px;border-radius:var(--radius-xl)"></div>
+        <div class="skeleton" style="height:360px;border-radius:var(--radius-xl)"></div>
+        <div class="skeleton" style="height:360px;border-radius:var(--radius-xl)"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile nav -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-inner">
+    <a href="dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">🏠</span>Home</a>
+    <a href="courses.html" class="mobile-nav-item active"><span class="mobile-nav-icon">📚</span>Courses</a>
+    <a href="ai-tutor.html" class="mobile-nav-item"><span class="mobile-nav-icon">🤖</span>AI Tutor</a>
+    <a href="progress.html" class="mobile-nav-item"><span class="mobile-nav-icon">📈</span>Progress</a>
+    <a href="profile.html" class="mobile-nav-item"><span class="mobile-nav-icon">👤</span>Profile</a>
+  </div>
+</nav>
+
+<script type="module">
+  import { logout } from '../js/app.js';
+  window.logout = logout;
+</script>
+<script type="module" src="../js/courses.js"></script>
+</body>
+</html>

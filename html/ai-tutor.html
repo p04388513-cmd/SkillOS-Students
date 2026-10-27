@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillOS AI Tutor — get instant answers, code help, and personalized learning support.">
+  <title>AI Tutor — SkillOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/ai-tutor.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="ai-tutor-layout">
+  <!-- ══════════════ CHAT SIDEBAR ══════════════ -->
+  <div class="chat-sidebar" id="sidebar">
+    <!-- Sidebar header with logo -->
+    <div class="chat-sidebar-header">
+      <a href="dashboard.html" class="topnav-logo" style="margin-bottom:var(--space-4)">
+        <div class="logo-mark">S</div>
+        <span class="logo-text" style="font-size:var(--text-base)">Skill<span>OS</span></span>
+      </a>
+      <div class="chat-sidebar-title">AI Conversations</div>
+      <button class="new-chat-btn" id="new-chat-btn">+ New Chat</button>
+    </div>
+
+    <!-- Chat history -->
+    <div class="chat-history-list" id="chat-history-list">
+      <div style="padding:var(--space-4);font-size:var(--text-xs);color:var(--text-muted);text-align:center">
+        Loading history…
+      </div>
+    </div>
+
+    <!-- Subject picker -->
+    <div class="subject-picker">
+      <div class="subject-picker-label">Study Subject</div>
+      <div class="subject-list">
+        <button class="subject-item active" data-subject="General Learning"><span class="subject-emoji">🌟</span> General Learning</button>
+        <button class="subject-item" data-subject="Programming"><span class="subject-emoji">💻</span> Programming</button>
+        <button class="subject-item" data-subject="Mathematics"><span class="subject-emoji">🧮</span> Mathematics</button>
+        <button class="subject-item" data-subject="Science"><span class="subject-emoji">🔬</span> Science</button>
+        <button class="subject-item" data-subject="Design"><span class="subject-emoji">🎨</span> Design</button>
+        <button class="subject-item" data-subject="Language"><span class="subject-emoji">📖</span> Language</button>
+        <button class="subject-item" data-subject="Business"><span class="subject-emoji">💼</span> Business</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MAIN CHAT ══════════════ -->
+  <div class="chat-main">
+    <!-- Topbar -->
+    <div class="chat-topbar">
+      <div class="chat-topbar-info">
+        <div class="ai-avatar">🤖</div>
+        <div>
+          <div class="chat-ai-name">SkillOS AI Tutor</div>
+          <div class="chat-ai-status">
+            <div class="status-dot online"></div>
+            Online · Powered by Gemini AI · <span id="current-subject-label">General Learning</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-topbar-actions">
+        <button class="btn btn-ghost btn-sm" id="clear-chat-btn" title="Clear conversation">🗑️ Clear</button>
+        <a href="dashboard.html" class="btn btn-ghost btn-sm">← Back</a>
+      </div>
+    </div>
+
+    <!-- Messages area -->
+    <div class="chat-messages" id="chat-messages">
+      <!-- Welcome screen rendered by JS -->
+      <div class="chat-welcome" id="chat-welcome">
+        <div class="chat-welcome-icon animate-float">🤖</div>
+        <h2 class="chat-welcome-title">Hi! I'm your AI Tutor</h2>
+        <p class="chat-welcome-desc">
+          Ask me anything — from math and science to coding and history.
+          I'm here to help you learn faster and smarter.
+        </p>
+        <div class="suggestion-chips">
+          <button class="suggestion-chip" data-prompt="Explain machine learning to me like I'm 10 years old">
+            <div class="suggestion-chip-icon">🧠</div>
+            <div class="suggestion-chip-text">Explain Machine Learning</div>
+            <div class="suggestion-chip-sub">Simple explanation</div>
+          </button>
+          <button class="suggestion-chip" data-prompt="Write a Python function to sort a list of numbers and explain it">
+            <div class="suggestion-chip-icon">🐍</div>
+            <div class="suggestion-chip-text">Python Code Help</div>
+            <div class="suggestion-chip-sub">Write & explain code</div>
+          </button>
+          <button class="suggestion-chip" data-prompt="What are the best study techniques for retaining information long-term?">
+            <div class="suggestion-chip-icon">📚</div>
+            <div class="suggestion-chip-text">Study Tips</div>
+            <div class="suggestion-chip-sub">Learn how to learn</div>
+          </button>
+          <button class="suggestion-chip" data-prompt="Quiz me on basic algebra — give me 5 questions one at a time">
+            <div class="suggestion-chip-icon">🧮</div>
+            <div class="suggestion-chip-text">Quiz Me: Algebra</div>
+            <div class="suggestion-chip-sub">Test your knowledge</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area">
+      <div class="chat-input-wrap">
+        <div class="chat-input-tools">
+          <button class="chat-tool-btn" title="Attach file (coming soon)" disabled>📎</button>
+          <button class="chat-tool-btn" title="Use voice (coming soon)" disabled>🎤</button>
+        </div>
+        <textarea
+          id="chat-input"
+          placeholder="Ask anything… e.g. 'Explain recursion with a simple example'"
+          rows="1"
+          maxlength="4000"
+        ></textarea>
+        <button class="chat-send-btn" id="send-btn" title="Send message (Enter)">➤</button>
+      </div>
+      <div class="chat-input-footer">
+        <div class="chat-powered-by">🤖 Powered by Google Gemini 1.5 Flash · Press Enter to send</div>
+        <div id="char-count" style="font-size:10px;color:var(--text-muted)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Char counter -->
+<script>
+  const chatInput = document.getElementById('chat-input');
+  const charCount = document.getElementById('char-count');
+  chatInput?.addEventListener('input', () => {
+    const len = chatInput.value.length;
+    charCount.textContent = len > 3000 ? `${4000-len} chars left` : '';
+  });
+</script>
+
+<script type="module">
+  import { logout } from '../js/app.js';
+  window.logout = logout;
+</script>
+<script type="module" src="../js/ai-tutor.js"></script>
+</body>
+</html>

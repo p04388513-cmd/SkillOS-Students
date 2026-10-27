@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Detail — SkillOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/courses.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div></div>
+<div id="toast-container"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="topnav-logo"><div class="logo-mark">S</div><span class="logo-text">Skill<span>OS</span></span></a>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <a href="dashboard.html" class="sidebar-link"><span class="link-icon">🏠</span> Dashboard</a>
+      <a href="courses.html" class="sidebar-link active"><span class="link-icon">📚</span> Courses</a>
+      <a href="ai-tutor.html" class="sidebar-link"><span class="link-icon">🤖</span> AI Tutor</a>
+      <a href="progress.html" class="sidebar-link"><span class="link-icon">📈</span> My Progress</a>
+      <div class="sidebar-section-label">Account</div>
+      <a href="profile.html" class="sidebar-link"><span class="link-icon">👤</span> Profile</a>
+      <button class="sidebar-link" onclick="logout()" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--text-secondary)"><span class="link-icon">🚪</span> Sign Out</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="window.location.href='profile.html'">
+        <div class="avatar-placeholder avatar-md" style="background:var(--grad-primary)"><span data-user-avatar style="font-size:14px;font-weight:700"></span></div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name truncate" data-user-name>Loading…</div><div class="sidebar-user-role text-xs text-muted">Student</div></div>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;backdrop-filter:blur(2px)"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <!-- Course hero -->
+    <div class="course-hero">
+      <div class="container">
+        <div class="course-hero-grid">
+          <!-- Left: Course info -->
+          <div>
+            <div class="course-hero-breadcrumb">
+              <a href="courses.html">📚 Courses</a>
+              <span>/</span>
+              <span id="breadcrumb-title">Loading…</span>
+            </div>
+            <span class="course-hero-category" id="course-category">Category</span>
+            <h1 class="course-hero-title" id="course-title">Loading course…</h1>
+            <p class="course-hero-desc" id="course-desc">Please wait…</p>
+            <div class="course-hero-meta">
+              <div class="course-hero-meta-item">👨‍🏫 <span id="course-instructor">Instructor</span></div>
+              <div class="course-hero-meta-item">⏱️ <span id="course-duration">Duration</span></div>
+              <div class="course-hero-meta-item">📖 <span id="course-lessons-count">Lessons</span></div>
+              <div class="course-hero-meta-item">📊 <span id="course-level">Level</span></div>
+              <div class="course-hero-meta-item">⭐ <span id="course-rating">4.9</span> · <span id="course-students">0 students</span></div>
+            </div>
+          </div>
+
+          <!-- Right: Enrollment card -->
+          <div>
+            <div class="enroll-card">
+              <div class="enroll-preview"><span id="course-emoji">📚</span></div>
+              <div class="enroll-body">
+                <div class="enroll-price">Free</div>
+
+                <!-- Progress (shown only when enrolled) -->
+                <div id="enroll-progress-wrap" style="display:none;margin-bottom:var(--space-4)">
+                  <div style="display:flex;justify-content:space-between;font-size:var(--text-xs);margin-bottom:var(--space-2)">
+                    <span id="completed-lessons-count">0 lessons</span>
+                    <span id="progress-pct" style="color:var(--primary);font-weight:600">0%</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-fill" id="progress-fill-bar" style="width:0%"></div></div>
+                </div>
+
+                <button class="btn btn-primary enroll-btn" id="enroll-btn">Enroll for Free</button>
+
+                <div class="enroll-features">
+                  <div class="enroll-feature"><span class="enroll-feature-icon">✅</span> Full course access</div>
+                  <div class="enroll-feature"><span class="enroll-feature-icon">✅</span> Mark lessons complete</div>
+                  <div class="enroll-feature"><span class="enroll-feature-icon">✅</span> Earn points & badges</div>
+                  <div class="enroll-feature"><span class="enroll-feature-icon">✅</span> AI tutor assistance</div>
+                  <div class="enroll-feature">
+                    <span class="enroll-feature-icon">🤖</span>
+                    <a href="#" id="ai-tutor-link" class="text-primary font-medium">Ask AI about this course</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Course content -->
+    <div class="page-body" style="max-width:860px">
+      <div class="curriculum" id="curriculum">
+        <h2 class="curriculum-title">📋 Course Curriculum</h2>
+        <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-6)">
+          Complete lessons in order and mark each one done to track your progress.
+          First 2 lessons are free previews — enroll to unlock all.
+        </p>
+        <div class="lesson-list" id="lesson-list">
+          <!-- Skeleton -->
+          <div class="skeleton" style="height:68px;border-radius:var(--radius-lg)"></div>
+          <div class="skeleton" style="height:68px;border-radius:var(--radius-lg)"></div>
+          <div class="skeleton" style="height:68px;border-radius:var(--radius-lg)"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Lesson modal -->
+<div class="modal-overlay hidden" id="lesson-modal">
+  <div class="modal-box">
+    <button class="modal-close-btn" onclick="closeLessonModal()">✕</button>
+    <div style="margin-bottom:var(--space-5)">
+      <span class="badge badge-green" id="modal-lesson-type">video</span>
+      <span style="font-size:var(--text-xs);color:var(--text-muted);margin-left:var(--space-2)" id="modal-lesson-duration"></span>
+    </div>
+    <h2 style="font-size:var(--text-2xl);font-weight:700;margin-bottom:var(--space-4)" id="modal-lesson-title">Lesson Title</h2>
+    <p style="color:var(--text-secondary);margin-bottom:var(--space-6)">
+      In a real deployment, the lesson video, reading, or quiz content would appear here.
+      For now, mark this lesson as complete to track your progress and earn points! 🎯
+    </p>
+
+    <!-- Video placeholder -->
+    <div style="background:var(--grad-hero);border-radius:var(--radius-xl);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-6);font-size:48px">
+      ▶️
+    </div>
+
+    <div style="display:flex;gap:var(--space-3)">
+      <button class="btn btn-primary" id="modal-complete-btn" style="flex:1">✓ Mark as Complete</button>
+      <button class="btn btn-ghost" onclick="closeLessonModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile nav -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-nav-inner">
+    <a href="dashboard.html" class="mobile-nav-item"><span class="mobile-nav-icon">🏠</span>Home</a>
+    <a href="courses.html" class="mobile-nav-item active"><span class="mobile-nav-icon">📚</span>Courses</a>
+    <a href="ai-tutor.html" class="mobile-nav-item"><span class="mobile-nav-icon">🤖</span>AI Tutor</a>
+    <a href="progress.html" class="mobile-nav-item"><span class="mobile-nav-icon">📈</span>Progress</a>
+    <a href="profile.html" class="mobile-nav-item"><span class="mobile-nav-icon">👤</span>Profile</a>
+  </div>
+</nav>
+
+<script type="module">
+  import { logout } from '../js/app.js';
+  window.logout = logout;
+</script>
+<script type="module" src="../js/course-detail.js"></script>
+</body>
+</html>
