@@ -228,19 +228,33 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 // Google Sign-In Route
 app.post('/api/auth/google', async (req, res) => {
-  const { credential } = req.body;
-  if (!credential) {
-    return res.status(400).json({ error: 'Google credential token is required' });
+  const { credential, access_token } = req.body;
+  if (!credential && !access_token) {
+    return res.status(400).json({ error: 'Google credential or access token is required' });
   }
 
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
+    let email, name, picture;
 
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
+    if (credential) {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      email = payload.email;
+      name = payload.name;
+      picture = payload.picture;
+    } else if (access_token) {
+      const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      if (!userRes.ok) throw new Error('Failed to fetch Google user profile');
+      const profile = await userRes.json();
+      email = profile.email;
+      name = profile.name;
+      picture = profile.picture;
+    }
 
     // Check if user exists in PostgreSQL
     let result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);

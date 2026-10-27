@@ -425,13 +425,13 @@ function setupRegister() {
   });
 }
 
-// Setup Google Sign In via Google Identity Services
+// Setup Google Sign In via Google Identity Services (OAuth2 Popup Flow - No FedCM / No One Tap)
 async function setupGoogleAuth() {
   const loginBtn = document.getElementById('google-login-btn');
   const regBtn = document.getElementById('google-register-btn');
 
   let googleClientId = '';
-  let isGoogleInitialized = false;
+  let tokenClient = null;
 
   try {
     const config = await apiFetch('/api/auth/config').catch(() => ({}));
@@ -440,7 +440,7 @@ async function setupGoogleAuth() {
     console.warn('Could not load Google client config:', e);
   }
 
-  // Fallback demo Google user if Google OAuth fails or origin is not whitelisted in Google Cloud
+  // Fallback demo Google user if Google OAuth origin mismatch or offline
   const loginWithDemoGoogle = () => {
     const mockUser = {
       id: 'google-demo-' + Date.now(),
@@ -464,43 +464,47 @@ async function setupGoogleAuth() {
     }, 700);
   };
 
-  const handleGoogleCredentialResponse = async (response) => {
-    showLoader();
-    try {
-      const data = await apiFetch('/api/auth/google', {
-        method: 'POST',
-        body: { credential: response.credential }
-      });
-
-      setAuthToken(data.token);
-      localStorage.setItem('skillos_user', JSON.stringify(data.user));
-
-      showToast('Google Sign-In Success', 'Welcome to SkillOS!', 'success');
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 700);
-    } catch (err) {
-      console.error(err);
-      showToast('Google Sign-In Failed', err.message, 'error');
-      hideLoader();
-    }
-  };
-
-  const initGoogle = () => {
-    if (!googleClientId || !window.google?.accounts?.id || isGoogleInitialized) return isGoogleInitialized;
+  const initTokenClient = () => {
+    if (tokenClient || !googleClientId || !window.google?.accounts?.oauth2) return tokenClient;
 
     try {
-      window.google.accounts.id.initialize({
+      tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: googleClientId,
-        callback: handleGoogleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: false
+        scope: 'email profile openid',
+        callback: async (tokenResponse) => {
+          if (tokenResponse.error) {
+            if (tokenResponse.error !== 'popup_closed_by_user') {
+              console.warn('Google OAuth error:', tokenResponse);
+              showToast('Google Sign-In Failed', tokenResponse.error_description || tokenResponse.error, 'error');
+            }
+            return;
+          }
+
+          showLoader();
+          try {
+            const data = await apiFetch('/api/auth/google', {
+              method: 'POST',
+              body: { access_token: tokenResponse.access_token }
+            });
+
+            setAuthToken(data.token);
+            localStorage.setItem('skillos_user', JSON.stringify(data.user));
+
+            showToast('Google Sign-In Success', 'Welcome to SkillOS!', 'success');
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 700);
+          } catch (err) {
+            console.error('Google backend verification failed:', err);
+            showToast('Google Sign-In Failed', err.message, 'error');
+            hideLoader();
+          }
+        }
       });
-      isGoogleInitialized = true;
-      return true;
+      return tokenClient;
     } catch (e) {
-      console.warn('Google accounts initialization error:', e);
-      return false;
+      console.warn('OAuth2 client init error:', e);
+      return null;
     }
   };
 
@@ -525,26 +529,24 @@ async function setupGoogleAuth() {
       return;
     }
 
-    if (window.google?.accounts?.id) {
-      initGoogle();
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isDismissedMoment && notification.isDismissedMoment()) {
-          console.log('Google prompt dismissed.');
-        }
-      });
+    const client = initTokenClient();
+    if (client) {
+      // Native Google OAuth popup window
+      client.requestAccessToken({ prompt: 'select_account' });
     } else {
-      showToast('Loading', 'Google Sign-In service is connecting, please try again.', 'info');
+      // Fallback if Google client script blocked or offline
+      loginWithDemoGoogle();
     }
   };
 
   loginBtn?.addEventListener('click', triggerGoogleLogin);
   regBtn?.addEventListener('click', triggerGoogleLogin);
 
-  // Poll for Google script load only until initialized
+  // Poll for Google OAuth2 script readiness
   let checkCount = 0;
   const interval = setInterval(() => {
     checkCount++;
-    if (initGoogle() || checkCount > 20) {
+    if (initTokenClient() || checkCount > 20) {
       clearInterval(interval);
     }
   }, 250);
