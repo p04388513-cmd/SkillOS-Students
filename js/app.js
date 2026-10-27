@@ -29,7 +29,17 @@ export function clearAuth() {
 // API Base URL helper (resolves backend port 5000 when accessed via Live Server, file:, or other ports)
 export function getApiBase() {
   if (typeof window !== 'undefined') {
-    if (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '5000')) {
+    if (window.SKILLOS_API_BASE) return window.SKILLOS_API_BASE;
+    try {
+      const saved = localStorage.getItem('skillos_api_base');
+      if (saved) return saved;
+    } catch (e) {}
+
+    const { protocol, hostname, port } = window.location;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+
+    // If accessed via file: or running locally on any port other than 5000 (e.g. 5500 Live Server, 5173, 8080)
+    if (protocol === 'file:' || (isLocalhost && port !== '5000')) {
       return 'http://localhost:5000';
     }
   }
@@ -248,35 +258,68 @@ export async function initAuthListener(onAuthenticated, onUnauthenticated) {
     return;
   }
 
+  // Helper to sync user information to DOM
+  const syncUserToDOM = (user) => {
+    document.querySelectorAll('[data-user-name]').forEach(el => {
+      el.textContent = user.name || 'Student';
+    });
+    document.querySelectorAll('[data-user-avatar]').forEach(el => {
+      if (user.avatar_url) {
+        el.innerHTML = `<img src="${user.avatar_url}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;">`;
+      } else {
+        el.textContent = (user.name || 'Student')
+          .split(' ')
+          .map(w => w[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase();
+      }
+    });
+  };
+
+  // If session is demo/offline, recover directly from localStorage
+  if (token.startsWith('demo-')) {
+    try {
+      const stored = localStorage.getItem('skillos_user');
+      if (stored) {
+        const user = JSON.parse(stored);
+        currentUser = user;
+        currentUserProfile = user;
+        currentUserProfile.displayName = user.name;
+        syncUserToDOM(user);
+        if (onAuthenticated) onAuthenticated(user, currentUserProfile);
+        hideLoader();
+        return;
+      }
+    } catch (e) {}
+  }
+
   try {
     const data = await apiFetch('/api/auth/me');
     if (data && data.user) {
       currentUser = data.user;
       currentUserProfile = data.user;
       currentUserProfile.displayName = data.user.name;
-
-      // Populate universal user-facing elements in DOM
-      document.querySelectorAll('[data-user-name]').forEach(el => {
-        el.textContent = data.user.name;
-      });
-      document.querySelectorAll('[data-user-avatar]').forEach(el => {
-        if (data.user.avatar_url) {
-          el.innerHTML = `<img src="${data.user.avatar_url}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;">`;
-        } else {
-          el.textContent = (data.user.name || 'Student')
-            .split(' ')
-            .map(w => w[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase();
-        }
-      });
-
+      syncUserToDOM(data.user);
       if (onAuthenticated) onAuthenticated(data.user, currentUserProfile);
     } else {
       handleUnauthenticated(onUnauthenticated);
     }
   } catch (err) {
+    // If backend is unreachable or 404, check for local user profile fallback
+    const stored = localStorage.getItem('skillos_user');
+    if (stored && (err.message?.includes('404') || err.message?.includes('Failed to fetch') || err.message?.includes('status 404'))) {
+      try {
+        const user = JSON.parse(stored);
+        currentUser = user;
+        currentUserProfile = user;
+        currentUserProfile.displayName = user.name;
+        syncUserToDOM(user);
+        if (onAuthenticated) onAuthenticated(user, currentUserProfile);
+        return;
+      } catch (e) {}
+    }
+
     console.warn('Session verification failed:', err.message);
     clearAuth();
     handleUnauthenticated(onUnauthenticated);

@@ -138,6 +138,31 @@ function setupLogin() {
         window.location.href = 'dashboard.html';
       }, 700);
     } catch (err) {
+      // Offline / Static Hosting (e.g. GitHub Pages) fallback
+      if (err.message && (err.message.includes('404') || err.message.includes('Failed to fetch') || err.message.includes('status 404'))) {
+        console.warn('Backend API 404/offline. Activating SkillOS local demo session.');
+        const mockUser = {
+          id: 'student-' + Math.floor(1000 + Math.random() * 9000),
+          name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          email: email,
+          role: 'student',
+          account_type: 'independent',
+          track: 'Full-Stack & AI Engineering',
+          college_name: 'SkillOS Open Academy',
+          streak: 4,
+          points: 480,
+          total_minutes: 210,
+          enrolledCourses: ['course-ai', 'course-web']
+        };
+        setAuthToken('demo-session-token-' + Date.now());
+        localStorage.setItem('skillos_user', JSON.stringify(mockUser));
+        showToast('Signed In (Demo Mode)', 'Logged in with local session. Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 700);
+        return;
+      }
+
       showToast('Authentication Failed', err.message, 'error');
       hideLoader();
     }
@@ -340,6 +365,36 @@ function setupRegister() {
       }, 700);
     } catch (err) {
       hideLoader();
+      // Offline / Static Hosting fallback
+      if (err.message && (err.message.includes('404') || err.message.includes('Failed to fetch') || err.message.includes('status 404'))) {
+        console.warn('Backend API 404/offline during registration. Creating local profile.');
+        const mockUser = {
+          id: 'student-' + Math.floor(1000 + Math.random() * 9000),
+          name,
+          email,
+          avatar_url: avatar_url || '',
+          account_type,
+          college_name: college_name || 'SkillOS Academy',
+          college_code: college_code || '',
+          student_college_id: student_college_id || '',
+          department_id: department_id || '',
+          semester: semester || '',
+          role: 'student',
+          track: account_type === 'college_referred' ? 'Academic Degree Pathway' : 'Independent AI Developer',
+          streak: 1,
+          points: 100,
+          total_minutes: 0,
+          enrolledCourses: []
+        };
+        setAuthToken('demo-session-token-' + Date.now());
+        localStorage.setItem('skillos_user', JSON.stringify(mockUser));
+        showToast('Account Created!', `Welcome to SkillOS, ${name}! Redirecting...`, 'success');
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 700);
+        return;
+      }
+
       const isAlreadyExists = err.message && /already exists/i.test(err.message);
       
       if (isAlreadyExists) {

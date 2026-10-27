@@ -159,6 +159,10 @@ app.get('/api/recent-joins', async (req, res) => {
   }
 });
 
+// Auth Route Helpers
+app.get('/api/auth/login', (req, res) => res.redirect('/login.html'));
+app.get('/api/auth/register', (req, res) => res.redirect('/login.html?tab=register'));
+
 // Login
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
