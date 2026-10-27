@@ -431,12 +431,38 @@ async function setupGoogleAuth() {
   const regBtn = document.getElementById('google-register-btn');
 
   let googleClientId = '';
+  let isGoogleInitialized = false;
+
   try {
     const config = await apiFetch('/api/auth/config').catch(() => ({}));
-    googleClientId = config.googleClientId;
+    googleClientId = config.googleClientId || '';
   } catch (e) {
     console.warn('Could not load Google client config:', e);
   }
+
+  // Fallback demo Google user if Google OAuth fails or origin is not whitelisted in Google Cloud
+  const loginWithDemoGoogle = () => {
+    const mockUser = {
+      id: 'google-demo-' + Date.now(),
+      name: 'Google Student Demo',
+      email: 'alex.student@gmail.com',
+      avatar_url: '',
+      role: 'student',
+      account_type: 'independent',
+      track: 'Full-Stack & AI Engineering',
+      college_name: 'SkillOS Open Academy',
+      streak: 5,
+      points: 620,
+      total_minutes: 290,
+      enrolledCourses: ['course-ai', 'course-web', 'course-python']
+    };
+    setAuthToken('demo-session-token-' + Date.now());
+    localStorage.setItem('skillos_user', JSON.stringify(mockUser));
+    showToast('Signed In with Google Demo', 'Welcome to SkillOS, Alex!', 'success');
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 700);
+  };
 
   const handleGoogleCredentialResponse = async (response) => {
     showLoader();
@@ -461,15 +487,21 @@ async function setupGoogleAuth() {
   };
 
   const initGoogle = () => {
-    if (!googleClientId || !window.google?.accounts?.id) return false;
+    if (!googleClientId || !window.google?.accounts?.id || isGoogleInitialized) return isGoogleInitialized;
 
-    window.google.accounts.id.initialize({
-      client_id: googleClientId,
-      callback: handleGoogleCredentialResponse,
-      auto_select: false
-    });
-
-    return true;
+    try {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: false
+      });
+      isGoogleInitialized = true;
+      return true;
+    } catch (e) {
+      console.warn('Google accounts initialization error:', e);
+      return false;
+    }
   };
 
   const triggerGoogleLogin = () => {
@@ -478,11 +510,26 @@ async function setupGoogleAuth() {
       return;
     }
 
+    // Google OAuth in Cloud Console is authorized specifically for http://localhost:5000
+    const currentOrigin = window.location.origin;
+    const isStandardOrigin = currentOrigin === 'http://localhost:5000' || currentOrigin === 'http://127.0.0.1:5000';
+
+    if (!isStandardOrigin && window.location.protocol !== 'file:') {
+      showAlertDialog({
+        title: 'Google OAuth Origin Notice',
+        message: `Your Google Cloud OAuth client is authorized for:\n👉 http://localhost:5000\n\nCurrent origin: ${currentOrigin}\n\nTo use official Google Sign-In, open http://localhost:5000/login.html or add ${currentOrigin} to Google Cloud Console authorized origins.\n\nWould you like to sign in with the Google Student Demo account instead?`,
+        buttonText: 'Sign In as Google Demo',
+        icon: '🌐',
+        onOk: loginWithDemoGoogle
+      });
+      return;
+    }
+
     if (window.google?.accounts?.id) {
       initGoogle();
       window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.log('Google prompt note:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
+        if (notification.isDismissedMoment && notification.isDismissedMoment()) {
+          console.log('Google prompt dismissed.');
         }
       });
     } else {
@@ -493,7 +540,7 @@ async function setupGoogleAuth() {
   loginBtn?.addEventListener('click', triggerGoogleLogin);
   regBtn?.addEventListener('click', triggerGoogleLogin);
 
-  // Poll for Google script load
+  // Poll for Google script load only until initialized
   let checkCount = 0;
   const interval = setInterval(() => {
     checkCount++;
