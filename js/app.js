@@ -609,19 +609,9 @@ function handleUnauthenticated(onUnauthenticated) {
   if (onUnauthenticated) {
     onUnauthenticated();
   } else {
-    // Default route protection: Redirect to landing/login
-    const path = window.location.pathname;
-    if (path.includes('dashboard.html') || 
-        path.includes('courses.html') || 
-        path.includes('course-details.html') || 
-        path.includes('ai-coach.html') || 
-        path.includes('assessments.html') || 
-        path.includes('progress.html') || 
-        path.includes('certificates.html') || 
-        path.includes('profile.html') || 
-        path.includes('settings.html')) {
-      window.location.href = 'login.html';
-    }
+    // Default route protection: Redirect to landing page (index.html)
+    const isSubdir = window.location.pathname.includes('/html/');
+    window.location.href = isSubdir ? '../index.html' : 'index.html';
   }
   hideLoader();
 }
@@ -652,16 +642,8 @@ export function initSidebar() {
   document.querySelectorAll('[data-logout-btn]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      showConfirmDialog({
-        title: 'Sign Out',
-        message: 'Are you sure you want to sign out of SkillOS?',
-        confirmText: 'Sign Out',
-        cancelText: 'Cancel',
-        confirmDanger: true,
-        onConfirm: () => {
-          logout();
-        }
-      });
+      e.preventDefault();
+      logout();
     });
   });
 
@@ -670,13 +652,13 @@ export function initSidebar() {
 
 // Universal logout function
 export function logout() {
-  showLoader();
   clearAuth();
-  showToast('Logged Out', 'You have been securely signed out.', 'info');
-  setTimeout(() => {
-    const isSubdir = window.location.pathname.includes('/html/');
-    window.location.href = isSubdir ? '../index.html' : 'index.html';
-  }, 400);
+  const isSubdir = window.location.pathname.includes('/html/');
+  window.location.href = isSubdir ? '../index.html' : 'index.html';
+}
+
+if (typeof window !== 'undefined') {
+  window.logout = logout;
 }
 
 // Utility formatting helpers
