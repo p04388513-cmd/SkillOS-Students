@@ -1,7 +1,7 @@
 // ============================================================
 //  SkillOS — Authentication Flow (auth.js) - PostgreSQL / REST API
 // ============================================================
-import { showToast, showLoader, hideLoader, setAuthToken, apiFetch, showAlertDialog, showConfirmDialog } from './app.js';
+import { showToast, showLoader, hideLoader, setAuthToken, apiFetch, showAlertDialog } from './app.js';
 
 // Setup Tab Switching logic
 function setupTabs() {
