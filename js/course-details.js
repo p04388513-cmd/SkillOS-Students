@@ -2,6 +2,7 @@
 //  SkillOS — Course Details & Interactive AI Tutor Controller
 // ============================================================
 import { apiFetch, initAuthListener, initSidebar, hideLoader, showToast } from './app.js';
+import { DEFAULT_COURSES, getCourseById } from './course-bank.js';
 
 let geminiApiKey = window.SKILLOS_GEMINI_KEY || '';
 async function getGeminiEndpoint() {
@@ -88,23 +89,25 @@ initAuthListener(async (user, profile) => {
 async function loadCourseData(courseId) {
   try {
     const data = await apiFetch(`/api/courses/${courseId}`);
-    if (!data.course) {
-      showToast('Error', 'Course not found.', 'error');
-      window.location.href = 'courses.html';
-      return;
+    if (data && data.course) {
+      course = data.course;
+    } else {
+      course = getCourseById(courseId);
     }
-    course = data.course;
-    
-    // Check if enrolled and get progress from user profile
-    const enrollment = userProfile?.enrollments?.find(e => e.course_id === courseId);
-    if (enrollment) {
-      currentProgress.percent = enrollment.progress_percent || 0;
-    }
-    
-    renderDetails();
   } catch (err) {
-    showToast('Error Loading', err.message, 'error');
+    console.warn('Backend unavailable, using static course details:', err.message);
+    course = getCourseById(courseId);
   }
+
+  // Check if enrolled and get progress from user profile
+  const enrollment = userProfile?.enrollments?.find(e => e.course_id === courseId);
+  if (enrollment) {
+    currentProgress.percent = enrollment.progress_percent || 0;
+  } else if (userProfile?.enrolledCourses?.includes(courseId)) {
+    currentProgress.percent = currentProgress.percent || 0;
+  }
+
+  renderDetails();
 }
 
 function renderDetails() {

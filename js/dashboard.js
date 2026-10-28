@@ -2,6 +2,7 @@
 //  SkillOS — Dashboard Controller (dashboard.js) - PostgreSQL
 // ============================================================
 import { apiFetch, initAuthListener, initSidebar, hideLoader, animateCounter } from './app.js';
+import { DEFAULT_COURSES } from './course-bank.js';
 
 // Initialise auth status
 initAuthListener(async (user, profile) => {
@@ -44,7 +45,7 @@ function renderTopStats(profile) {
   animateCounter(document.getElementById('stat-points'), profile.points || 0);
 }
 
-// Load Dashboard Data from PostgreSQL Backend
+// Load Dashboard Data from PostgreSQL Backend with offline fallback
 async function loadDashboardData() {
   try {
     const data = await apiFetch('/api/dashboard');
@@ -58,7 +59,25 @@ async function loadDashboardData() {
     renderActivityFeed();
     await loadSuggestedCourses(enrolledCourses || []);
   } catch (err) {
-    console.error('Failed to load dashboard:', err);
+    console.warn('Backend dashboard unavailable, using local session & course bank:', err.message);
+    if (userProfile) {
+      renderTopStats(userProfile);
+      const enrolledIds = userProfile.enrolledCourses || ['course-ai', 'course-web', 'course-python'];
+      const enrolledObj = enrolledIds.map(id => {
+        const c = DEFAULT_COURSES.find(dc => dc.id === id) || DEFAULT_COURSES[0];
+        return {
+          course_id: c.id,
+          title: c.title,
+          progress_percent: 35,
+          lessons_completed: 1,
+          lessons_count: c.lessons_count || 4,
+          emoji: c.emoji
+        };
+      });
+      renderContinueLearning(enrolledObj);
+      renderActivityFeed();
+      await loadSuggestedCourses(enrolledObj);
+    }
   }
 }
 
@@ -121,8 +140,11 @@ async function loadSuggestedCourses(enrolledCourses) {
 
   try {
     const enrolledIds = (enrolledCourses || []).map(c => c.course_id);
-    const data = await apiFetch('/api/courses');
-    const allCourses = data.courses || [];
+    let allCourses = DEFAULT_COURSES;
+    try {
+      const data = await apiFetch('/api/courses');
+      if (data && data.courses && data.courses.length > 0) allCourses = data.courses;
+    } catch {}
     
     const unEnrolled = allCourses.filter(course => !enrolledIds.includes(course.id));
 

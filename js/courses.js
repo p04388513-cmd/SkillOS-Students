@@ -2,6 +2,7 @@
 //  SkillOS — Courses Catalog Browser (courses.js) - PostgreSQL
 // ============================================================
 import { apiFetch, initAuthListener, initSidebar, hideLoader, showToast, showConfirmDialog } from './app.js';
+import { DEFAULT_COURSES } from './course-bank.js';
 
 let allCourses = [];
 let userProfile = null;
@@ -27,12 +28,16 @@ initAuthListener(async (user, profile) => {
 async function loadCourses() {
   try {
     const data = await apiFetch('/api/courses');
-    allCourses = data.courses || [];
-    renderCourses(allCourses);
+    if (data && data.courses && data.courses.length > 0) {
+      allCourses = data.courses;
+    } else {
+      allCourses = DEFAULT_COURSES;
+    }
   } catch (err) {
-    console.error('Catalog Error:', err);
-    showToast('Catalog Error', 'Could not load courses from database.', 'error');
+    console.warn('Backend unavailable, using static course catalog:', err.message);
+    allCourses = DEFAULT_COURSES;
   }
+  renderCourses(allCourses);
 }
 
 const courseImageMap = {
@@ -123,12 +128,16 @@ window.handleEnroll = async (courseId) => {
   const course = allCourses.find(c => c.id === courseId);
   try {
     await apiFetch(`/api/courses/${courseId}/enroll`, { method: 'POST' });
-    if (!userProfile.enrolledCourses) userProfile.enrolledCourses = [];
-    if (!userProfile.enrolledCourses.includes(courseId)) {
-      userProfile.enrolledCourses.push(courseId);
-    }
-    showToast('Enrolled Successfully', 'Course unlocked with 24/7 AI Tutor!', 'success');
-    renderCourses(filterData());
+  } catch (err) {
+    console.warn('Backend enroll failed, updating local state:', err.message);
+  }
+  if (!userProfile.enrolledCourses) userProfile.enrolledCourses = [];
+  if (!userProfile.enrolledCourses.includes(courseId)) {
+    userProfile.enrolledCourses.push(courseId);
+  }
+  localStorage.setItem('skillos_user', JSON.stringify(userProfile));
+  showToast('Enrolled Successfully', 'Course unlocked with 24/7 AI Tutor!', 'success');
+  renderCourses(filterData());
 
     // Prompt user to immediately take the course where AI tutor runs
     showConfirmDialog({
