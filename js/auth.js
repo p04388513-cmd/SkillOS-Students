@@ -1,7 +1,7 @@
 // ============================================================
 //  SkillOS — Authentication Flow (auth.js) - PostgreSQL / REST API
 // ============================================================
-import { showToast, showLoader, hideLoader, setAuthToken, apiFetch, showAlertDialog } from './app.js';
+import { showToast, showLoader, hideLoader, setAuthToken, apiFetch, showAlertDialog, isStaticEnvironment } from './app.js';
 
 // Setup Tab Switching logic
 function setupTabs() {
@@ -448,7 +448,7 @@ async function setupGoogleAuth() {
   const loginWithDemoGoogle = () => {
     const mockUser = {
       id: 'google-demo-' + Date.now(),
-      name: 'Google Student Demo',
+      name: 'Google Scholar',
       email: 'alex.student@gmail.com',
       avatar_url: '',
       role: 'student',
@@ -462,7 +462,7 @@ async function setupGoogleAuth() {
     };
     setAuthToken('demo-session-token-' + Date.now());
     localStorage.setItem('skillos_user', JSON.stringify(mockUser));
-    showToast('Signed In with Google Demo', 'Welcome to SkillOS, Alex!', 'success');
+    showToast('Signed In with Google', 'Welcome to SkillOS!', 'success');
     setTimeout(() => {
       window.location.href = 'dashboard.html';
     }, 700);
@@ -485,8 +485,50 @@ async function setupGoogleAuth() {
           }
 
           showLoader();
+
+          const fetchGoogleUserInfo = async () => {
+            const gResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+            });
+            const gProfile = await gResp.json();
+            const googleUser = {
+              id: 'google-' + (gProfile.sub || Date.now()),
+              name: gProfile.name || 'Student Scholar',
+              email: gProfile.email || 'scholar@skillos.ai',
+              avatar_url: gProfile.picture || '',
+              role: 'student',
+              account_type: 'independent',
+              track: 'Full-Stack & AI Engineering',
+              college_name: 'SkillOS Open Academy',
+              streak: 1,
+              points: 150,
+              total_minutes: 45,
+              enrolledCourses: ['course-ai', 'course-web', 'course-python']
+            };
+
+            setAuthToken('google-session-' + Date.now());
+            localStorage.setItem('skillos_user', JSON.stringify(googleUser));
+
+            showToast('Google Sign-In Success', `Welcome to SkillOS, ${googleUser.name}!`, 'success');
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 700);
+          };
+
+          if (isStaticEnvironment()) {
+            try {
+              await fetchGoogleUserInfo();
+            } catch (err) {
+              console.warn('Google userinfo fetch failed:', err);
+              loginWithDemoGoogle();
+            } finally {
+              hideLoader();
+            }
+            return;
+          }
+
           try {
-            // First attempt backend token exchange
+            // Full-stack mode (localhost:5000 / PostgreSQL)
             const data = await apiFetch('/api/auth/google', {
               method: 'POST',
               body: { access_token: tokenResponse.access_token }
@@ -502,33 +544,7 @@ async function setupGoogleAuth() {
           } catch (err) {
             console.warn('Backend exchange unavailable, retrieving Google userinfo directly:', err);
             try {
-              // Directly fetch Google User Profile using standard OAuth2 UserInfo
-              const gResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-              });
-              const gProfile = await gResp.json();
-              const googleUser = {
-                id: 'google-' + (gProfile.sub || Date.now()),
-                name: gProfile.name || 'Scholar',
-                email: gProfile.email || 'scholar@skillos.ai',
-                avatar_url: gProfile.picture || '',
-                role: 'student',
-                account_type: 'independent',
-                track: 'Full-Stack & AI Engineering',
-                college_name: 'SkillOS Open Academy',
-                streak: 1,
-                points: 150,
-                total_minutes: 45,
-                enrolledCourses: ['course-ai', 'course-web', 'course-python']
-              };
-
-              setAuthToken('google-session-' + Date.now());
-              localStorage.setItem('skillos_user', JSON.stringify(googleUser));
-
-              showToast('Google Sign-In Success', `Welcome to SkillOS, ${googleUser.name}!`, 'success');
-              setTimeout(() => {
-                window.location.href = 'dashboard.html';
-              }, 700);
+              await fetchGoogleUserInfo();
             } catch (e2) {
               loginWithDemoGoogle();
             } finally {

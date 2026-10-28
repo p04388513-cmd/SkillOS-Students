@@ -1,3 +1,4 @@
+import { DEFAULT_COURSES, getCourseById } from './course-bank.js';
 // ============================================================
 //  SkillOS — Global Application Core (app.js) - PostgreSQL / REST API
 // ============================================================
@@ -27,6 +28,275 @@ export function clearAuth() {
 }
 
 // API Base URL helper (resolves backend port 5000 when accessed via Live Server, file:, or other ports)
+
+// Environment detector for static hosting (GitHub Pages, Netlify, Cloudflare Pages)
+export function isStaticEnvironment() {
+  if (typeof window === 'undefined') return false;
+  if (window.SKILLOS_API_BASE) return false;
+  try {
+    if (localStorage.getItem('skillos_api_base')) return false;
+  } catch (e) {}
+
+  const host = window.location.hostname;
+  return host.includes('github.io') || host.includes('netlify.app') || host.includes('pages.dev');
+}
+
+// In-memory static API router for static hosting environments
+// Resolves data instantly from localStorage and course-bank without triggering 404/405 network errors
+function handleStaticApi(endpoint, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const clean = endpoint.split('?')[0].replace(/^\/+/, '');
+  const path = clean.startsWith('api/') ? clean.slice(4) : clean;
+  let body = options.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  } else if (!body) {
+    body = {};
+  }
+
+  // 1. /api/auth/config
+  if (path === 'auth/config') {
+    return {
+      googleClientId: '800154027928-b28cqoivmcket10kem13d78bcersfrjp.apps.googleusercontent.com'
+    };
+  }
+
+  // 2. /api/auth/me
+  if (path === 'auth/me') {
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('skillos_user') || 'null');
+    } catch (e) {}
+    if (user) {
+      return { user };
+    }
+    throw new Error('Request failed with status 401');
+  }
+
+  // 3. /api/auth/login
+  if (path === 'auth/login') {
+    const email = body.email || 'scholar@skillos.ai';
+    const user = {
+      id: 'student-' + Math.floor(1000 + Math.random() * 9000),
+      name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      email: email,
+      role: 'student',
+      account_type: 'independent',
+      track: 'Full-Stack & AI Engineering',
+      college_name: 'SkillOS Open Academy',
+      streak: 4,
+      points: 480,
+      total_minutes: 210,
+      enrolledCourses: ['course-ai', 'course-web', 'course-python']
+    };
+    const token = 'demo-session-token-' + Date.now();
+    setAuthToken(token);
+    localStorage.setItem('skillos_user', JSON.stringify(user));
+    return { token, user };
+  }
+
+  // 4. /api/auth/register
+  if (path === 'auth/register') {
+    const user = {
+      id: 'student-' + Math.floor(1000 + Math.random() * 9000),
+      name: body.name || 'Student Scholar',
+      email: body.email || 'scholar@skillos.ai',
+      role: 'student',
+      account_type: body.account_type || 'independent',
+      track: body.track || 'Full-Stack & AI Engineering',
+      college_name: body.college_name || 'SkillOS Open Academy',
+      streak: 1,
+      points: 100,
+      total_minutes: 0,
+      enrolledCourses: ['course-ai', 'course-web', 'course-python']
+    };
+    const token = 'demo-session-token-' + Date.now();
+    setAuthToken(token);
+    localStorage.setItem('skillos_user', JSON.stringify(user));
+    return { token, user };
+  }
+
+  // 5. /api/auth/google
+  if (path === 'auth/google') {
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('skillos_user') || 'null'); } catch (e) {}
+    if (!user) {
+      user = {
+        id: 'google-' + Date.now(),
+        name: 'Student Scholar',
+        email: 'scholar@skillos.ai',
+        role: 'student',
+        account_type: 'independent',
+        track: 'Full-Stack & AI Engineering',
+        college_name: 'SkillOS Open Academy',
+        streak: 1,
+        points: 150,
+        total_minutes: 45,
+        enrolledCourses: ['course-ai', 'course-web', 'course-python']
+      };
+      localStorage.setItem('skillos_user', JSON.stringify(user));
+    }
+    const token = 'google-session-' + Date.now();
+    setAuthToken(token);
+    return { token, user };
+  }
+
+  // 6. /api/auth/profile
+  if (path === 'auth/profile') {
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('skillos_user') || 'null'); } catch (e) {}
+    if (!user) user = { name: 'Student Scholar', email: 'scholar@skillos.ai' };
+    if (body.name) user.name = body.name;
+    if (body.avatar_url) user.avatar_url = body.avatar_url;
+    if (body.bio) user.bio = body.bio;
+    if (body.settingsDND !== undefined) user.settingsDND = body.settingsDND;
+    localStorage.setItem('skillos_user', JSON.stringify(user));
+    return { user, message: 'Profile updated successfully' };
+  }
+
+  // 7. /api/auth/reset-password
+  if (path === 'auth/reset-password') {
+    return { success: true, message: 'Password reset successfully.' };
+  }
+
+  // 8. /api/dashboard
+  if (path === 'dashboard') {
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('skillos_user') || 'null'); } catch (e) {}
+    if (!user) {
+      user = {
+        id: 'student-1001',
+        name: 'Student Scholar',
+        email: 'scholar@skillos.ai',
+        role: 'student',
+        streak: 4,
+        points: 480,
+        total_minutes: 210,
+        enrolledCourses: ['course-ai', 'course-web', 'course-python']
+      };
+    }
+    const enrolledIds = user.enrolledCourses || ['course-ai', 'course-web', 'course-python'];
+    const enrolledCourses = enrolledIds.map(id => {
+      const c = DEFAULT_COURSES.find(dc => dc.id === id) || { id, title: id, lessons_count: 4, emoji: '📘' };
+      return {
+        course_id: c.id,
+        title: c.title,
+        progress_percent: 35,
+        lessons_completed: 1,
+        lessons_count: c.lessons_count || 4,
+        emoji: c.emoji
+      };
+    });
+    return {
+      user,
+      enrolledCourses,
+      stats: {
+        streak: user.streak || 4,
+        points: user.points || 480,
+        total_minutes: user.total_minutes || 210
+      }
+    };
+  }
+
+  // 9. /api/courses
+  if (path === 'courses') {
+    return { courses: DEFAULT_COURSES };
+  }
+
+  // 10. /api/courses/:id/enroll
+  if (path.startsWith('courses/') && path.endsWith('/enroll')) {
+    const courseId = path.split('/')[1];
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('skillos_user') || 'null'); } catch (e) {}
+    if (user) {
+      if (!user.enrolledCourses) user.enrolledCourses = [];
+      if (!user.enrolledCourses.includes(courseId)) {
+        user.enrolledCourses.push(courseId);
+        localStorage.setItem('skillos_user', JSON.stringify(user));
+      }
+    }
+    return { success: true };
+  }
+
+  // 11. /api/courses/:id/unenroll
+  if (path.startsWith('courses/') && path.endsWith('/unenroll')) {
+    const courseId = path.split('/')[1];
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('skillos_user') || 'null'); } catch (e) {}
+    if (user && user.enrolledCourses) {
+      user.enrolledCourses = user.enrolledCourses.filter(id => id !== courseId);
+      localStorage.setItem('skillos_user', JSON.stringify(user));
+    }
+    return { success: true };
+  }
+
+  // 12. /api/courses/:id/lessons/:lessonId/complete
+  if (path.startsWith('courses/') && path.includes('/complete')) {
+    return { success: true, points: 50, streak: 5 };
+  }
+
+  // 13. /api/courses/:id
+  if (path.startsWith('courses/')) {
+    const courseId = path.split('/')[1];
+    const course = getCourseById(courseId);
+    return { course };
+  }
+
+  // 14. /api/assessments/attempts
+  if (path === 'assessments/attempts') {
+    let attempts = {};
+    try { attempts = JSON.parse(localStorage.getItem('skillos_assessment_attempts') || '{}'); } catch (e) {}
+    return { attempts: Object.values(attempts) };
+  }
+
+  // 15. /api/certificates
+  if (path === 'certificates') {
+    let certificates = [];
+    try { certificates = JSON.parse(localStorage.getItem('skillos_certificates') || '[]'); } catch (e) {}
+    return { certificates, credentialTracks: [] };
+  }
+
+  // 16. /api/certificates/verify/:code
+  if (path.startsWith('certificates/verify/')) {
+    const code = decodeURIComponent(path.split('/')[2] || '');
+    let certificates = [];
+    try { certificates = JSON.parse(localStorage.getItem('skillos_certificates') || '[]'); } catch (e) {}
+    const cert = certificates.find(c => c.certificate_code === code);
+    if (cert) {
+      return { valid: true, certificate: cert };
+    }
+    return { valid: false, error: 'Certificate not found' };
+  }
+
+  // 17. /api/progress
+  if (path === 'progress') {
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('skillos_user') || 'null'); } catch (e) {}
+    return {
+      user: user || { streak: 4, points: 480, total_minutes: 210 },
+      enrolledCourses: user?.enrolledCourses || ['course-ai', 'course-web'],
+      completedCoursesCount: 1,
+      studyStats: {
+        totalHours: 3.5,
+        dailyAverage: '45 mins',
+        weeklyGoalProgress: '75%'
+      }
+    };
+  }
+
+  // 18. /api/recent-joins
+  if (path === 'recent-joins') {
+    return { joins: [] };
+  }
+
+  // 19. /api/ai/generate-visual
+  if (path.startsWith('ai/')) {
+    return { success: false, message: 'AI visuals handled client-side' };
+  }
+
+  return { success: true };
+}
+
 export function getApiBase() {
   if (typeof window !== 'undefined') {
     if (window.SKILLOS_API_BASE) return window.SKILLOS_API_BASE;
@@ -48,6 +318,10 @@ export function getApiBase() {
 
 // Global API Fetch helper that attaches JWT Token
 export async function apiFetch(endpoint, options = {}) {
+  // If running on static hosting without external backend base, handle instantly in memory
+  if (isStaticEnvironment() && !endpoint.startsWith('http')) {
+    return Promise.resolve(handleStaticApi(endpoint, options));
+  }
   const token = getAuthToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -278,7 +552,7 @@ export async function initAuthListener(onAuthenticated, onUnauthenticated) {
   };
 
   // If session is demo/offline, recover directly from localStorage
-  if (token.startsWith('demo-')) {
+  if (token.startsWith('demo-') || token.startsWith('google-session-') || isStaticEnvironment()) {
     try {
       const stored = localStorage.getItem('skillos_user');
       if (stored) {

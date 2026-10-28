@@ -62,6 +62,7 @@
     try {
       const { protocol, hostname, port } = window.location;
       const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+      if (hostname.includes('github.io') || hostname.includes('netlify.app') || hostname.includes('pages.dev')) return;
       const apiBase = (protocol === 'file:' || (isLocalhost && port !== '5000')) ? 'http://localhost:5000' : '';
       const res = await fetch(`${apiBase}/api/recent-joins`).catch(() => null);
       if (!res || !res.ok) return;

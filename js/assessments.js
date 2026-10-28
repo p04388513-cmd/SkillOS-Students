@@ -1,7 +1,7 @@
 // ============================================================
 //  SkillOS — Skill Assessment & Diagnostic Exam Engine
 // ============================================================
-import { initAuthListener, initSidebar, hideLoader, showToast, showConfirmDialog, apiFetch } from './app.js';
+import { initAuthListener, initSidebar, hideLoader, showToast, showConfirmDialog, apiFetch, isStaticEnvironment } from './app.js';
 import { ASSESSMENT_DATA, PASS_THRESHOLD, XP_PASS, ASSESSMENT_COURSE_MAP, gradeAssessment } from './assessment-bank.js';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -631,17 +631,19 @@ async function sendSubmission() {
   let attemptData = null;
   let serverMeta = null;
 
-  try {
-    const data = await apiFetch(`/api/assessments/${test.id}/submit`, {
-      method: 'POST',
-      body: JSON.stringify({ answers: userAnswers, timeSpentSeconds })
-    });
-    if (data && data.attempt) {
-      attemptData = data.attempt;
-      serverMeta = data;
+  if (!isStaticEnvironment()) {
+    try {
+      const data = await apiFetch(`/api/assessments/${test.id}/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ answers: userAnswers, timeSpentSeconds })
+      });
+      if (data && data.attempt) {
+        attemptData = data.attempt;
+        serverMeta = data;
+      }
+    } catch (err) {
+      console.warn('Backend submit unavailable, grading locally:', err.message);
     }
-  } catch (err) {
-    console.warn('Backend submit unavailable (e.g. GitHub Pages static host), grading locally:', err.message);
   }
 
   // If backend unavailable (static host / GitHub Pages 405), grade locally using assessment-bank
