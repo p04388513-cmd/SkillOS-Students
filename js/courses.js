@@ -127,23 +127,23 @@ window.handleEnroll = async (courseId) => {
   }
   const course = allCourses.find(c => c.id === courseId);
   try {
-    await apiFetch(`/api/courses/${courseId}/enroll`, { method: 'POST' });
-  } catch (err) {
-    console.warn('Backend enroll failed, updating local state:', err.message);
-  }
-  if (!userProfile.enrolledCourses) userProfile.enrolledCourses = [];
-  if (!userProfile.enrolledCourses.includes(courseId)) {
-    userProfile.enrolledCourses.push(courseId);
-  }
-  localStorage.setItem('skillos_user', JSON.stringify(userProfile));
-  showToast('Enrolled Successfully', 'Course unlocked with 24/7 AI Tutor!', 'success');
-  renderCourses(filterData());
+    await apiFetch(`/api/courses/${courseId}/enroll`, { method: 'POST' }).catch(err => {
+      console.warn('Backend enroll failed, updating local state:', err.message);
+    });
+
+    if (!userProfile.enrolledCourses) userProfile.enrolledCourses = [];
+    if (!userProfile.enrolledCourses.includes(courseId)) {
+      userProfile.enrolledCourses.push(courseId);
+    }
+    localStorage.setItem('skillos_user', JSON.stringify(userProfile));
+    showToast('Enrolled Successfully', 'Course unlocked with 24/7 AI Tutor!', 'success');
+    renderCourses(filterData());
 
     // Prompt user to immediately take the course where AI tutor runs
     showConfirmDialog({
-      title: '🎉 Enrolled in ' + (course?.title || 'Course'),
+      title: '?? Enrolled in ' + (course?.title || 'Course'),
       message: `You are now enrolled in "${course?.title || 'this course'}". Would you like to take this course now with your interactive AI Tutor?`,
-      confirmText: 'Take Course Now 🚀',
+      confirmText: 'Take Course Now ??',
       cancelText: 'Stay on Catalog',
       onConfirm: () => {
         window.location.href = `course-details.html?id=${courseId}`;
@@ -166,8 +166,11 @@ window.handleUnenroll = (courseId) => {
     confirmDanger: true,
     onConfirm: async () => {
       try {
-        await apiFetch(`/api/courses/${courseId}/unenroll`, { method: 'POST' });
-        userProfile.enrolledCourses = userProfile.enrolledCourses.filter(id => id !== courseId);
+        await apiFetch(`/api/courses/${courseId}/unenroll`, { method: 'POST' }).catch(err => {
+          console.warn('Backend unenroll failed, updating local state:', err.message);
+        });
+        userProfile.enrolledCourses = (userProfile.enrolledCourses || []).filter(id => id !== courseId);
+        localStorage.setItem('skillos_user', JSON.stringify(userProfile));
         showToast('Unenrolled', 'Course removed from your dashboard.', 'info');
         renderCourses(filterData());
       } catch (err) {
