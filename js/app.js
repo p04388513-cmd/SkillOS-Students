@@ -516,7 +516,8 @@ export function showAlertDialog({
   message = '', 
   buttonText = 'Got It', 
   icon = '💡',
-  onOk 
+  onOk,
+  onConfirm 
 }) {
   playNotificationSound(icon === '⚠️' ? 'warning' : 'info');
   let modal = document.getElementById('skillos-alert-modal');
@@ -544,8 +545,9 @@ export function showAlertDialog({
 
   const closeDialog = (triggerCallback = false) => {
     modal.classList.add('hidden');
-    if (triggerCallback && onOk) {
-      onOk();
+    const cb = onOk || onConfirm;
+    if (triggerCallback && cb) {
+      cb();
     }
   };
 

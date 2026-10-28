@@ -1,7 +1,8 @@
 // ============================================================
 //  SkillOS — Course Details & Interactive AI Tutor Controller
 // ============================================================
-import { apiFetch, initAuthListener, initSidebar, hideLoader, showToast } from './app.js';
+import { apiFetch, initAuthListener, initSidebar, hideLoader, showToast, showAlertDialog } from './app.js';
+import { COURSE_ASSESSMENT_MAP } from './assessment-bank.js';
 import { DEFAULT_COURSES, getCourseById } from './course-bank.js';
 
 let geminiApiKey = window.SKILLOS_GEMINI_KEY || '';
@@ -175,15 +176,7 @@ function renderDetails() {
 
     if (compEl) compEl.textContent = `${comp}/${total} lessons`;
     if (pctEl) pctEl.textContent = `${percent}%`;
-// Course to Assessment Interrelation
-const COURSE_ASSESSMENT_MAP = {
-  'course-py': 'python',
-  'course-web': 'uiux',
-  'course-ai': 'ai-ml',
-  'course-js': 'javascript',
-  'course-cloud': 'cloud',
-  'course-sec': 'security'
-};
+// (COURSE_ASSESSMENT_MAP imported from assessment-bank.js)
 
     if (barEl) barEl.style.width = `${percent}%`;
 
