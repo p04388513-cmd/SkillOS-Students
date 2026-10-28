@@ -60,7 +60,9 @@
   // Fetch real students from the PostgreSQL database
   async function fetchRealJoins() {
     try {
-      const apiBase = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '5000')) ? 'http://localhost:5000' : '';
+      const { protocol, hostname, port } = window.location;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+      const apiBase = (protocol === 'file:' || (isLocalhost && port !== '5000')) ? 'http://localhost:5000' : '';
       const res = await fetch(`${apiBase}/api/recent-joins`).catch(() => null);
       if (!res || !res.ok) return;
       const data = await res.json().catch(() => null);

@@ -21,11 +21,22 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Favicon handler to avoid 404
+// Favicon & Apple Icon handlers to avoid 404
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'favicon.ico')));
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'images', 'logo.png'));
+});
 
 // Middleware
 app.use(cors());
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (res.statusCode >= 400) {
+      console.warn(`[HTTP ${res.statusCode}] ${req.method} ${req.originalUrl}`);
+    }
+  });
+  next();
+});
 app.use(express.json());
 app.use(express.static(__dirname)); // Serves frontend HTML/CSS/JS directly!
 
