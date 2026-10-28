@@ -2,7 +2,7 @@
 //  SkillOS — Skill Assessment & Diagnostic Exam Engine
 // ============================================================
 import { initAuthListener, initSidebar, hideLoader, showToast, showConfirmDialog, apiFetch } from './app.js';
-import { ASSESSMENT_DATA, PASS_THRESHOLD, XP_PASS, ASSESSMENT_COURSE_MAP } from './assessment-bank.js';
+import { ASSESSMENT_DATA, PASS_THRESHOLD, XP_PASS, ASSESSMENT_COURSE_MAP, gradeAssessment } from './assessment-bank.js';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -51,11 +51,30 @@ async function loadAttempts() {
       apiFetch('/api/assessments/attempts').catch(() => ({ attempts: [] })),
       apiFetch('/api/dashboard').catch(() => ({ enrolledCourses: [] }))
     ]);
-    attempts = Object.fromEntries((data.attempts || []).map(a => [a.assessment_id, a]));
-    enrollmentsMap = Object.fromEntries((dash.enrolledCourses || []).map(c => [c.course_id, c]));
+    const serverAttempts = Object.fromEntries((data?.attempts || []).map(a => [a.assessment_id, a]));
+    const serverEnrollments = Object.fromEntries((dash?.enrolledCourses || []).map(c => [c.course_id, c]));
+
+    // Load local stored attempts from localStorage for offline/GitHub Pages
+    let localAttempts = {};
+    try {
+      localAttempts = JSON.parse(localStorage.getItem('skillos_assessment_attempts') || '{}');
+    } catch (e) {}
+
+    // Load local user enrollments from userProfile / localStorage
+    let localEnrollments = {};
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('skillos_user') || '{}');
+      if (storedUser && storedUser.enrollments) {
+        localEnrollments = Object.fromEntries(storedUser.enrollments.map(e => [e.course_id, e]));
+      } else if (storedUser && storedUser.enrolledCourses) {
+        localEnrollments = Object.fromEntries(storedUser.enrolledCourses.map(id => [id, { course_id: id, progress_percent: 100 }]));
+      }
+    } catch (e) {}
+
+    attempts = { ...localAttempts, ...serverAttempts };
+    enrollmentsMap = { ...localEnrollments, ...serverEnrollments };
   } catch (err) {
-    console.warn('Could not load assessment history:', err.message);
-    showToast('Connection Issue', 'Could not load your assessment history.', 'error');
+    console.warn('Could not load assessment history from server, using local storage:', err.message);
   }
 }
 
@@ -609,26 +628,80 @@ async function sendSubmission() {
   const test = currentTest;
   const timeSpentSeconds = test.durationSeconds - secondsRemaining;
 
+  let attemptData = null;
+  let serverMeta = null;
+
   try {
     const data = await apiFetch(`/api/assessments/${test.id}/submit`, {
       method: 'POST',
       body: JSON.stringify({ answers: userAnswers, timeSpentSeconds })
     });
-    attempts[test.id] = data.attempt;
-    await loadAttempts();
-    renderResults(test, data.attempt, true, data);
-  } catch (err) {
-    // Already completed elsewhere (409) — reload history and show the stored result
-    await loadAttempts();
-    if (attempts[test.id]) {
-      showToast('Already Completed', 'This assessment was already submitted. Showing your recorded result.', 'warning');
-      renderResults(test, attempts[test.id], false);
-    } else {
-      showToast('Submission Failed', err.message || 'Could not submit your assessment. Please try again.', 'error');
-      submitting = false;
-      launchResumeAfterError(test, timeSpentSeconds);
+    if (data && data.attempt) {
+      attemptData = data.attempt;
+      serverMeta = data;
     }
+  } catch (err) {
+    console.warn('Backend submit unavailable (e.g. GitHub Pages static host), grading locally:', err.message);
   }
+
+  // If backend unavailable (static host / GitHub Pages 405), grade locally using assessment-bank
+  if (!attemptData) {
+    const grade = gradeAssessment(test, userAnswers);
+    attemptData = {
+      assessment_id: test.id,
+      answers: userAnswers,
+      correct_count: grade.correct,
+      total_questions: grade.total,
+      score: grade.score,
+      passed: grade.passed,
+      xp_awarded: grade.xp,
+      time_spent_seconds: timeSpentSeconds,
+      completed_at: new Date().toISOString()
+    };
+  }
+
+  // Store attempt in memory and localStorage
+  attempts[test.id] = attemptData;
+  try {
+    const storedAttempts = JSON.parse(localStorage.getItem('skillos_assessment_attempts') || '{}');
+    storedAttempts[test.id] = attemptData;
+    localStorage.setItem('skillos_assessment_attempts', JSON.stringify(storedAttempts));
+
+    // Update user points in session
+    const storedUser = JSON.parse(localStorage.getItem('skillos_user') || '{}');
+    if (storedUser) {
+      storedUser.points = (storedUser.points || 0) + attemptData.xp_awarded;
+      localStorage.setItem('skillos_user', JSON.stringify(storedUser));
+    }
+  } catch (e) {}
+
+  // If passed and paired course is 100% complete, issue local certificate
+  const pairedCourseId = test.courseId || ASSESSMENT_COURSE_MAP[test.id];
+  const enrollment = enrollmentsMap[pairedCourseId];
+  const isCourseDone = enrollment ? (enrollment.progress_percent >= 100) : false;
+
+  if (attemptData.passed && isCourseDone) {
+    serverMeta = serverMeta || {};
+    serverMeta.certificate_issued = true;
+    const certCode = 'SKILLOS-' + (test.id || 'PY').toUpperCase() + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    serverMeta.certificate = {
+      certificate_code: certCode,
+      course_id: pairedCourseId,
+      course_title: test.courseTitle,
+      student_name: (enrollment?.student_name || 'Student'),
+      issued_at: new Date().toISOString()
+    };
+    try {
+      const storedCerts = JSON.parse(localStorage.getItem('skillos_certificates') || '[]');
+      if (!storedCerts.some(c => c.course_id === pairedCourseId)) {
+        storedCerts.push(serverMeta.certificate);
+        localStorage.setItem('skillos_certificates', JSON.stringify(storedCerts));
+      }
+    } catch (e) {}
+  }
+
+  showToast(attemptData.passed ? '?? Assessment Passed!' : 'Assessment Completed', `Score: ${attemptData.score}% ? +${attemptData.xp_awarded} XP earned!`, attemptData.passed ? 'success' : 'info');
+  renderResults(test, attemptData, true, serverMeta);
 }
 
 // Network error: keep the answers and let the student retry submitting

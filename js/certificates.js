@@ -31,8 +31,21 @@ initAuthListener(async (user, profile) => {
 async function loadCertificates() {
   try {
     const certsData = await apiFetch('/api/certificates').catch(() => ({ certificates: [], credentialTracks: [] }));
-    activeCertificates = certsData.certificates || [];
-    activeCredentialTracks = certsData.credentialTracks || [];
+    activeCertificates = certsData?.certificates || [];
+    activeCredentialTracks = certsData?.credentialTracks || [];
+
+    // Merge offline certificates unlocked in local session
+    try {
+      const localCerts = JSON.parse(localStorage.getItem('skillos_certificates') || '[]');
+      if (Array.isArray(localCerts) && localCerts.length > 0) {
+        const existingCodes = new Set(activeCertificates.map(c => c.certificate_code || c.certificate_id));
+        for (const lc of localCerts) {
+          if (!existingCodes.has(lc.certificate_code)) {
+            activeCertificates.push(lc);
+          }
+        }
+      }
+    } catch (e) {}
 
     setupCertSearch();
     renderEarnedCertificates('');
