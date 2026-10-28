@@ -5,18 +5,35 @@ import { apiFetch, initAuthListener, initSidebar, hideLoader, showToast, showAle
 import { COURSE_ASSESSMENT_MAP } from './assessment-bank.js';
 import { DEFAULT_COURSES, getCourseById } from './course-bank.js';
 
-let geminiApiKey = window.SKILLOS_GEMINI_KEY || '';
+let geminiApiKey = window.SKILLOS_GEMINI_KEY || localStorage.getItem('skillos_gemini_key') || '';
+
 async function getGeminiEndpoint() {
   if (!geminiApiKey) {
     try {
-      const res = await fetch('/api/config/gemini-key');
-      const data = await res.json();
-      geminiApiKey = data.key || '';
+      const cached = localStorage.getItem('skillos_gemini_key');
+      if (cached) {
+        geminiApiKey = cached;
+      } else {
+        const data = await apiFetch('/api/config/gemini-key').catch(() => null);
+        if (data && data.key) {
+          geminiApiKey = data.key;
+          localStorage.setItem('skillos_gemini_key', data.key);
+        }
+      }
     } catch {
       geminiApiKey = '';
     }
   }
-  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiApiKey}`;
+
+  if (!geminiApiKey) {
+    const userEntered = prompt('🔑 Please enter your Gemini API Key to chat with your AI Tutor (saved locally in your browser):');
+    if (userEntered && userEntered.trim()) {
+      geminiApiKey = userEntered.trim();
+      localStorage.setItem('skillos_gemini_key', geminiApiKey);
+    }
+  }
+
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiApiKey || ''}`;
 }
 
 let course = null;
@@ -808,7 +825,12 @@ Tone: Warm, mentor-like, encouraging, and clear.
     body: JSON.stringify({ contents })
   });
 
-  if (!res.ok) throw new Error('Gemini API call failed');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    console.error('Gemini API error:', res.status, errData);
+    const errMsg = errData.error?.message || `API Error (${res.status})`;
+    throw new Error(errMsg);
+  }
   const data = await res.json();
   const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
 

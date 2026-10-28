@@ -3,18 +3,35 @@
 // ============================================================
 import { initAuthListener, initSidebar, hideLoader, showToast, showConfirmDialog, apiFetch } from './app.js';
 
-let geminiApiKey = window.SKILLOS_GEMINI_KEY || '';
+let geminiApiKey = window.SKILLOS_GEMINI_KEY || localStorage.getItem('skillos_gemini_key') || '';
+
 async function getGeminiEndpoint() {
   if (!geminiApiKey) {
     try {
-      const res = await fetch('/api/config/gemini-key');
-      const data = await res.json();
-      geminiApiKey = data.key || '';
+      const cached = localStorage.getItem('skillos_gemini_key');
+      if (cached) {
+        geminiApiKey = cached;
+      } else {
+        const data = await apiFetch('/api/config/gemini-key').catch(() => null);
+        if (data && data.key) {
+          geminiApiKey = data.key;
+          localStorage.setItem('skillos_gemini_key', data.key);
+        }
+      }
     } catch {
       geminiApiKey = '';
     }
   }
-  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiApiKey}`;
+
+  if (!geminiApiKey) {
+    const userEntered = prompt('🔑 Please enter your Gemini API Key to enable AI coaching (saved locally in your browser):');
+    if (userEntered && userEntered.trim()) {
+      geminiApiKey = userEntered.trim();
+      localStorage.setItem('skillos_gemini_key', geminiApiKey);
+    }
+  }
+
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiApiKey || ''}`;
 }
 
 let currentUser = null;
@@ -524,7 +541,12 @@ async function callGeminiAPI(promptText) {
     body: JSON.stringify({ contents })
   });
 
-  if (!response.ok) throw new Error('API Error');
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    console.error('Gemini API Error:', response.status, errData);
+    const errMsg = errData.error?.message || `API Error (${response.status})`;
+    throw new Error(errMsg);
+  }
   const data = await response.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
 }

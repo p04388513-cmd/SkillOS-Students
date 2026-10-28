@@ -61,6 +61,12 @@ function handleStaticApi(endpoint, options = {}) {
     };
   }
 
+  // /api/config/gemini-key
+  if (path === 'config/gemini-key') {
+    const key = localStorage.getItem('skillos_gemini_key') || '';
+    return { key };
+  }
+
   // 2. /api/auth/me
   if (path === 'auth/me') {
     let user = null;
