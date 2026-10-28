@@ -478,9 +478,8 @@ async function setupGoogleAuth() {
         callback: async (tokenResponse) => {
           if (tokenResponse.error) {
             if (tokenResponse.error !== 'popup_closed_by_user') {
-              console.warn('Google OAuth response notice:', tokenResponse);
-              showToast('Google Sign-In Notice', 'Signing in with Student Demo...', 'info');
-              loginWithDemoGoogle();
+              console.warn('Google OAuth error:', tokenResponse);
+              showToast('Google Sign-In Failed', tokenResponse.error_description || tokenResponse.error, 'error');
             }
             return;
           }
@@ -550,52 +549,16 @@ async function setupGoogleAuth() {
       googleClientId = DEFAULT_GOOGLE_CLIENT_ID;
     }
 
-    const currentOrigin = window.location.origin;
-    const isStandardOrigin = currentOrigin === 'http://localhost:5000' || currentOrigin === 'http://127.0.0.1:5000';
-
-    if (!isStandardOrigin && window.location.protocol !== 'file:') {
-      showConfirmDialog({
-        title: 'Google Sign-In on GitHub Pages',
-        message: `Your Google Cloud OAuth client is authorized for:\n?? http://localhost:5000\n\nIf you have not added "${currentOrigin}" to Authorized JavaScript Origins in Google Cloud Console, Google will block it with "Error 400: origin_mismatch".\n\nWould you like to sign in as Student Demo, or try official Google Login?`,
-        confirmText: 'Sign In as Student Demo',
-        cancelText: 'Launch Google Login',
-        confirmDanger: false,
-        onConfirm: () => {
-          loginWithDemoGoogle();
-        }
-      });
-
-      const modal = document.getElementById('skillos-confirm-modal');
-      const cancelBtn = modal?.querySelector('#modal-cancel-btn');
-      if (cancelBtn) {
-        cancelBtn.onclick = () => {
-          modal.classList.add('hidden');
-          const client = initTokenClient();
-          if (client) {
-            try {
-              client.requestAccessToken({ prompt: 'select_account' });
-            } catch (err) {
-              loginWithDemoGoogle();
-            }
-          } else {
-            loginWithDemoGoogle();
-          }
-        };
-      }
-      return;
-    }
-
-    // Direct Google OAuth popup on localhost:5000
     const client = initTokenClient();
     if (client) {
       try {
         client.requestAccessToken({ prompt: 'select_account' });
       } catch (err) {
-        console.warn('Could not launch Google popup:', err);
-        loginWithDemoGoogle();
+        console.error('Could not launch Google popup:', err);
+        showToast('Google Sign-In Error', 'Could not open Google Sign-In popup', 'error');
       }
     } else {
-      loginWithDemoGoogle();
+      showToast('Google Sign-In', 'Google Sign-In service is initializing. Please try again.', 'info');
     }
   };
 
