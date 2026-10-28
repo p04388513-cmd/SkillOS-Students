@@ -61,8 +61,9 @@
   async function fetchRealJoins() {
     try {
       const apiBase = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '5000')) ? 'http://localhost:5000' : '';
-      const res = await fetch(`${apiBase}/api/recent-joins`);
-      const data = await res.json();
+      const res = await fetch(`${apiBase}/api/recent-joins`).catch(() => null);
+      if (!res || !res.ok) return;
+      const data = await res.json().catch(() => null);
       if (data && data.joins && data.joins.length > 0) {
         const formatted = data.joins.map((user, idx) => {
           const diffMinutes = Math.floor((Date.now() - new Date(user.created_at).getTime()) / 60000);
