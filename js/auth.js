@@ -152,7 +152,7 @@ function setupLogin() {
           streak: 4,
           points: 480,
           total_minutes: 210,
-          enrolledCourses: ['course-ai', 'course-web']
+          enrolledCourses: []
         };
         setAuthToken('demo-session-token-' + Date.now());
         localStorage.setItem('skillos_user', JSON.stringify(mockUser));
@@ -458,7 +458,7 @@ async function setupGoogleAuth() {
       streak: 5,
       points: 620,
       total_minutes: 290,
-      enrolledCourses: ['course-ai', 'course-web', 'course-python']
+      enrolledCourses: []
     };
     setAuthToken('demo-session-token-' + Date.now());
     localStorage.setItem('skillos_user', JSON.stringify(mockUser));
@@ -503,7 +503,7 @@ async function setupGoogleAuth() {
               streak: 1,
               points: 150,
               total_minutes: 45,
-              enrolledCourses: ['course-ai', 'course-web', 'course-python']
+              enrolledCourses: []
             };
 
             setAuthToken('google-session-' + Date.now());

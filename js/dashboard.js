@@ -62,7 +62,7 @@ async function loadDashboardData() {
     console.warn('Backend dashboard unavailable, using local session & course bank:', err.message);
     if (userProfile) {
       renderTopStats(userProfile);
-      const enrolledIds = userProfile.enrolledCourses || ['course-ai', 'course-web', 'course-python'];
+      const enrolledIds = userProfile.enrolledCourses || [];
       const enrolledObj = enrolledIds.map(id => {
         const c = DEFAULT_COURSES.find(dc => dc.id === id) || DEFAULT_COURSES[0];
         return {

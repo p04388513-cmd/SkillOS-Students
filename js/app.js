@@ -93,7 +93,7 @@ function handleStaticApi(endpoint, options = {}) {
       streak: 4,
       points: 480,
       total_minutes: 210,
-      enrolledCourses: ['course-ai', 'course-web', 'course-python']
+      enrolledCourses: []
     };
     const token = 'demo-session-token-' + Date.now();
     setAuthToken(token);
@@ -114,7 +114,7 @@ function handleStaticApi(endpoint, options = {}) {
       streak: 1,
       points: 100,
       total_minutes: 0,
-      enrolledCourses: ['course-ai', 'course-web', 'course-python']
+      enrolledCourses: []
     };
     const token = 'demo-session-token-' + Date.now();
     setAuthToken(token);
@@ -138,7 +138,7 @@ function handleStaticApi(endpoint, options = {}) {
         streak: 1,
         points: 150,
         total_minutes: 45,
-        enrolledCourses: ['course-ai', 'course-web', 'course-python']
+        enrolledCourses: []
       };
       localStorage.setItem('skillos_user', JSON.stringify(user));
     }
@@ -178,10 +178,10 @@ function handleStaticApi(endpoint, options = {}) {
         streak: 4,
         points: 480,
         total_minutes: 210,
-        enrolledCourses: ['course-ai', 'course-web', 'course-python']
+        enrolledCourses: []
       };
     }
-    const enrolledIds = user.enrolledCourses || ['course-ai', 'course-web', 'course-python'];
+    const enrolledIds = user.enrolledCourses || [];
     const enrolledCourses = enrolledIds.map(id => {
       const c = DEFAULT_COURSES.find(dc => dc.id === id) || { id, title: id, lessons_count: 4, emoji: '📘' };
       return {
@@ -280,7 +280,7 @@ function handleStaticApi(endpoint, options = {}) {
     try { user = JSON.parse(localStorage.getItem('skillos_user') || 'null'); } catch (e) {}
     return {
       user: user || { streak: 4, points: 480, total_minutes: 210 },
-      enrolledCourses: user?.enrolledCourses || ['course-ai', 'course-web'],
+      enrolledCourses: user?.enrolledCourses || [],
       completedCoursesCount: 1,
       studyStats: {
         totalHours: 3.5,
@@ -316,7 +316,7 @@ export function getApiBase() {
 
     // If accessed via file: or running locally on any port other than 5000 (e.g. 5500 Live Server, 5173, 8080)
     if (protocol === 'file:' || (isLocalhost && port !== '5000')) {
-      return 'http://localhost:5000';
+      return `${protocol === 'file:' ? 'http:' : protocol}//${hostname || 'localhost'}:5000`;
     }
   }
   return '';
@@ -557,8 +557,8 @@ export async function initAuthListener(onAuthenticated, onUnauthenticated) {
     });
   };
 
-  // If session is demo/offline, recover directly from localStorage
-  if (token.startsWith('demo-') || token.startsWith('google-session-') || isStaticEnvironment()) {
+  // If on static hosting (GitHub Pages) with demo/google session, recover directly from localStorage
+  if (isStaticEnvironment() && (token.startsWith('demo-') || token.startsWith('google-session-'))) {
     try {
       const stored = localStorage.getItem('skillos_user');
       if (stored) {
