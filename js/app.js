@@ -674,7 +674,8 @@ export function logout() {
   clearAuth();
   showToast('Logged Out', 'You have been securely signed out.', 'info');
   setTimeout(() => {
-    window.location.href = 'login.html';
+    const isSubdir = window.location.pathname.includes('/html/');
+    window.location.href = isSubdir ? '../index.html' : 'index.html';
   }, 400);
 }
 
