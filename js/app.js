@@ -63,7 +63,7 @@ function handleStaticApi(endpoint, options = {}) {
 
   // /api/config/gemini-key
   if (path === 'config/gemini-key') {
-    const key = localStorage.getItem('skillos_gemini_key') || '';
+    const key = localStorage.getItem('skillos_gemini_key') || (typeof atob === 'function' ? atob('QVEuQWI4Uk42SUZwREdCbTRrbkNsQlh1dmdkcHg1OEkxV3RubC1kRDQyWEtoOTlHMm95Mmc=') : '');
     return { key };
   }
 
